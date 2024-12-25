@@ -42,3 +42,27 @@ message ServerMessage {
     KeyValueMessage key_value = 4;
   }
 }
+
+message Member {
+  string hostname = 1; // Hostname of the cluster member.
+  int32 port = 2;      // Port of the cluster member.
+}
+
+message Cluster {
+  repeated Member members = 1; // List of members in the cluster.
+}
+
+message ClusterInfoRequest {
+  Cluster cluster = 1; // The cluster information being sent by the requester.
+}
+
+message ClusterInfoResponse {
+  enum Status {
+    OK = 0;          // The cluster was accepted.
+    NEED_UPDATES = 1; // The cluster needs updates.
+  }
+
+  Status status = 1;          // Status of the response.
+  Cluster add_members = 2;    // Members to be added, if any.
+  Cluster remove_members = 3; // Members to be removed, if any.
+}

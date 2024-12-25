@@ -11,6 +11,7 @@ import (
 	"github.com/mdkhanga/kvstore/cluster"
 	pb "github.com/mdkhanga/kvstore/kvmessages"
 	"github.com/mdkhanga/kvstore/logger"
+	"github.com/mdkhanga/kvstore/models"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	peer "google.golang.org/grpc/peer"
@@ -80,7 +81,7 @@ func (s *Server) Communicate(stream pb.KVSevice_CommunicateServer) error {
 
 	go receiveLoop(stream, receiveMessageQueue, stopChan, closeStopChan)
 
-	go processMessageLoop(receiveMessageQueue, sendMessageQueue, stopChan, closeStopChan)
+	go processMessageLoop(&stream, receiveMessageQueue, sendMessageQueue, stopChan, closeStopChan)
 
 	go sendLoop(stream, sendMessageQueue, stopChan, closeStopChan)
 
@@ -102,7 +103,7 @@ func StartGrpcServer(portPtr *string) {
 
 	s := grpc.NewServer()
 	pb.RegisterKVSeviceServer(s, &Server{})
-	Log.Info().Any("GRPC server listening at ", lis.Addr()).Send()
+	Log.Info().Any("GRPC server listening at ", lis.Addr().String()).Send()
 	if err := s.Serve(lis); err != nil {
 		Log.Error().AnErr("failed to serve: ", err).Send()
 	}
@@ -188,7 +189,7 @@ func sendLoop(stream pb.KVSevice_CommunicateServer, messageQueue *MessageQueue, 
 	}
 }
 
-func processMessageLoop(receiveMessageQueue *MessageQueue, sendMessageQueue *MessageQueue, stopChan chan struct{}, closeStopChan func()) {
+func processMessageLoop(stream *pb.KVSevice_CommunicateServer, receiveMessageQueue *MessageQueue, sendMessageQueue *MessageQueue, stopChan chan struct{}, closeStopChan func()) {
 
 	for {
 
@@ -226,7 +227,7 @@ func processMessageLoop(receiveMessageQueue *MessageQueue, sendMessageQueue *Mes
 				}
 
 				if exists, _ := cluster.ClusterService.Exists(host, port); !exists {
-					cluster.ClusterService.AddToCluster(host, port)
+					cluster.ClusterService.AddToCluster(&models.ClusterMember{Host: host, Port: port, Stream: stream})
 					Log.Info().Str("Hostname", host).
 						Int32("Port", port).
 						Msg("Added new server to Cluster")
