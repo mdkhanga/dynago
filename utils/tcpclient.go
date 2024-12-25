@@ -1,10 +1,6 @@
-package main
+package utils
 
-import (
-	"fmt"
-	"net"
-)
-
+/*
 func main() {
 	// Connect to the echo server at localhost:8081
 	conn, err := net.Dial("tcp", "localhost:8081")
@@ -32,4 +28,4 @@ func main() {
 
 	fmt.Printf("Received from server: %s\n", buffer[:n])
 
-}
+} */

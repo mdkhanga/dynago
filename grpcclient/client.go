@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/mdkhanga/kvstore/kvmessages"
 	"github.com/mdkhanga/kvstore/logger"
+	"github.com/mdkhanga/kvstore/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -108,13 +109,20 @@ func CallGrpcServer(hostport string) {
 
 }
 
-func CallGrpcServerv2(hostport string) {
+func CallGrpcServerv2(myhost *string, myport *string, seedHostport *string) error {
+
+	myportInt32, err := utils.StringToInt32(*myport)
+
+	if err != nil {
+		Log.Error().AnErr("Error converting port to int32", err)
+		return err
+	}
 
 	for {
 
 		Log.Debug().Msg(" Calling grpc server")
 
-		conn, err := grpc.NewClient(hostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(*seedHostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			Log.Error().AnErr("did not connect:", err).Send()
 			Log.Info().Msg("Sleep for 5 sec and try again")
@@ -148,7 +156,7 @@ func CallGrpcServerv2(hostport string) {
 
 		go receiveLoop(stream, receiveMessageQueue, stopChan)
 
-		go pingLoop(sendMessageQueue, stopChan)
+		go pingLoop(sendMessageQueue, stopChan, myhost, &myportInt32)
 
 		<-stopChan
 		Log.Info().Msg("Stopping message processing due to stream error")
@@ -222,7 +230,7 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 
 }
 
-func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}) {
+func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}, myhost *string, myport *int32) {
 
 	for {
 
@@ -237,7 +245,7 @@ func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}) {
 			msg := &pb.ServerMessage{
 				Type: pb.MessageType_PING,
 				Content: &pb.ServerMessage_Ping{
-					Ping: &pb.PingRequest{Hello: 1, Hostname: "localhost", Port: 8085},
+					Ping: &pb.PingRequest{Hello: 1, Hostname: *myhost, Port: *myport},
 				},
 			}
 

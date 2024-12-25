@@ -17,8 +17,7 @@ import (
 var kvMap map[string]string
 
 var (
-	port = flag.Int("port", 50051, "The server port")
-	Host = "localhost"
+// port = flag.Int("port", 50051, "The server port")
 )
 
 func main() {
@@ -27,12 +26,14 @@ func main() {
 
 	Logger.Info().Msg("Welcome to key value store")
 
+	host := flag.String("i", "localhost", "ipv4 address tp bind to")
 	portPtr := flag.String("p", "8081", "tcp port to listenon")
 	seed := flag.String("seed", "", "ip of server to connect to")
 	httpPort := flag.String("h", "8080", "http port to listenon")
 
 	flag.Parse()
 
+	Logger.Debug().Str("Going to bind to address: ", *host)
 	Logger.Info().Str("Going to listen on port ", *portPtr)
 	Logger.Debug().Str("Seed to connect to ", *seed).Send()
 	Logger.Info().Str("Going to listen on http port ", *httpPort).Send()
@@ -45,10 +46,10 @@ func main() {
 	router.GET("/kvstore/:key", getValue)
 	router.POST("/kvstore", setValue)
 
-	go grpcserver.StartGrpcServer(portPtr)
+	go grpcserver.StartGrpcServer(host, portPtr)
 
 	if *seed != "" {
-		go client.CallGrpcServerv2(*seed)
+		go client.CallGrpcServerv2(host, portPtr, seed)
 	}
 
 	router.Run(":" + *httpPort)
