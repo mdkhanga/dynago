@@ -78,3 +78,11 @@ func New() IClusterService {
 		clusterMap: make(map[string]m.ClusterMember),
 	}
 }
+
+func (c *cluster) ClusterInfoGossip() {
+
+	for {
+
+	}
+
+}
