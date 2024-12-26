@@ -85,6 +85,11 @@ func (c *cluster) ClusterInfoGossip() {
 
 	for {
 
+		var items []string
+		for _, member := range c.clusterMap {
+			items = append(items, fmt.Sprintf("%s:%d", member.Host, member.Port))
+		}
+
 		time.Sleep(1 * time.Second) // Wait before checking again
 		continue
 	}
