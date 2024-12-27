@@ -11,7 +11,9 @@ import (
 	client "github.com/mdkhanga/kvstore/grpcclient"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mdkhanga/kvstore/cluster"
 	"github.com/mdkhanga/kvstore/logger"
+	"github.com/mdkhanga/kvstore/utils"
 )
 
 var kvMap map[string]string
@@ -40,6 +42,10 @@ func main() {
 
 	kvMap = make(map[string]string)
 	kvMap["hello"] = "world"
+
+	portInt32, _ := utils.StringToInt32(*portPtr)
+	cluster.ClusterService.AddToCluster(&m.ClusterMember{Host: *host, Port: portInt32})
+	go cluster.ClusterService.ClusterInfoGossip()
 
 	router := gin.Default()
 	router.GET("/kvstore", getInfo)

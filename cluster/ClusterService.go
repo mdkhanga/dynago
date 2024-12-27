@@ -2,15 +2,18 @@ package cluster
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"time"
 
+	"github.com/mdkhanga/kvstore/logger"
 	m "github.com/mdkhanga/kvstore/models"
 )
 
 var (
 	ClusterService = New()
+	Log            = logger.WithComponent("cluster").Log
 )
 
 type cluster struct {
@@ -23,6 +26,7 @@ type IClusterService interface {
 	RemoveFromCluster(Hostname string, port int32) error
 	ListCluster() ([]*m.ClusterMember, error)
 	Exists(Hostnanme string, port int32) (bool, error)
+	ClusterInfoGossip()
 }
 
 func (c *cluster) AddToCluster(m *m.ClusterMember) error {
@@ -90,7 +94,9 @@ func (c *cluster) ClusterInfoGossip() {
 			items = append(items, fmt.Sprintf("%s:%d", member.Host, member.Port))
 		}
 
-		time.Sleep(1 * time.Second) // Wait before checking again
+		result := strings.Join(items, ", ")
+		Log.Info().Str("Cluster members", result).Send()
+		time.Sleep(5 * time.Second) // Wait before checking again
 		continue
 	}
 
