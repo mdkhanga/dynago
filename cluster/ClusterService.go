@@ -7,6 +7,7 @@ import (
 
 	"time"
 
+	"github.com/mdkhanga/kvstore/config"
 	"github.com/mdkhanga/kvstore/logger"
 	m "github.com/mdkhanga/kvstore/models"
 )
@@ -87,11 +88,19 @@ func New() IClusterService {
 
 func (c *cluster) ClusterInfoGossip() {
 
+	cfg := config.GetConfig()
+
 	for {
 
 		var items []string
 		for _, member := range c.clusterMap {
 			items = append(items, fmt.Sprintf("%s:%d", member.Host, member.Port))
+
+			if member.Host == cfg.Hostname && member.Port == cfg.Port {
+				continue
+			}
+
+			Log.Info().Str("Sending cluster info msg to", member.Host).Int32("and", member.Port).Send()
 		}
 
 		result := strings.Join(items, ", ")

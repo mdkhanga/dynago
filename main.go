@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mdkhanga/kvstore/cluster"
+	"github.com/mdkhanga/kvstore/config"
 	"github.com/mdkhanga/kvstore/logger"
 	"github.com/mdkhanga/kvstore/utils"
 )
@@ -44,6 +45,9 @@ func main() {
 	kvMap["hello"] = "world"
 
 	portInt32, _ := utils.StringToInt32(*portPtr)
+
+	config.Init(*host, portInt32)
+
 	cluster.ClusterService.AddToCluster(&m.ClusterMember{Host: *host, Port: portInt32})
 	go cluster.ClusterService.ClusterInfoGossip()
 
