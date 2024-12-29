@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mdkhanga/kvstore/config"
+	pb "github.com/mdkhanga/kvstore/kvmessages"
 	"github.com/mdkhanga/kvstore/logger"
 )
 
@@ -92,14 +93,36 @@ func (c *cluster) ClusterInfoGossip() {
 	for {
 
 		var items []string
-		for _, member := range c.clusterMap {
-			items = append(items, fmt.Sprintf("%s:%d", *member.Host, *member.Port))
+		members := make([]*pb.Member, len(c.clusterMap))
+		for _, pr := range c.clusterMap {
+			items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 
-			if *member.Host == cfg.Hostname && *member.Port == cfg.Port {
+			members = append(members, &pb.Member{Hostname: *pr.Host, Port: *pr.Port})
+
+			if *pr.Host == cfg.Hostname && *pr.Port == cfg.Port {
 				continue
 			}
 
-			Log.Info().Str("Sending cluster info msg to", *member.Host).Int32("and", *member.Port).Send()
+		}
+
+		cls := pb.Cluster{Members: members}
+
+		clsReq := pb.ClusterInfoRequest{Cluster: &cls}
+
+		clsServerMsg := pb.ServerMessage{
+			Type:    pb.MessageType_CLUSTER_INFO_REQUEST,
+			Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
+		}
+
+		for _, pr := range c.clusterMap {
+
+			if *pr.Host == cfg.Hostname && *pr.Port == cfg.Port {
+				continue
+			}
+
+			Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
+			pr.outMessages.Enqueue(&clsServerMsg)
+
 		}
 
 		result := strings.Join(items, ", ")

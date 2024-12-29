@@ -222,6 +222,9 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 
 		if msg.Type == pb.MessageType_PING_RESPONSE {
 			Log.Info().Int32("Received Ping message from the stream ", msg.GetPingResponse().Hello)
+		} else if msg.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
+
+			Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
 		}
 
 		// For now do nothing with the msg

@@ -27,9 +27,13 @@ type IPeer interface {
 
 func (p *Peer) ReceivedMessage(message *pb.ServerMessage) {
 
+	p.inMessages.Enqueue(message)
+
 }
 
 func (p *Peer) SendMessage(message *pb.ServerMessage) {
+
+	p.outMessages.Enqueue(message)
 
 }
 

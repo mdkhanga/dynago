@@ -32,6 +32,8 @@ enum MessageType {
   PING = 0;
   PING_RESPONSE=1;
   KEY_VALUE = 2;
+  CLUSTER_INFO_REQUEST = 3;
+  CLUSTER_INFO_RESPONSE = 4;
 }
 
 message ServerMessage {
@@ -40,6 +42,8 @@ message ServerMessage {
     PingRequest ping = 2;
     PingResponse ping_response = 3;
     KeyValueMessage key_value = 4;
+    ClusterInfoRequest cluster_info_request = 5;
+    ClusterInfoResponse cluster_info_reponse = 6;
   }
 }
 
