@@ -34,7 +34,7 @@ func (c *cluster) AddToCluster(m *Peer) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	key := fmt.Sprintf("%s:%d", m.Host, m.Port)
+	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
 	if _, exists := c.clusterMap[key]; exists {
 		return fmt.Errorf("member %s already exists in the cluster", key)
 	}

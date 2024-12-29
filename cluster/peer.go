@@ -188,6 +188,11 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 					p.Host = &host
 					p.Port = &port
 
+					Log.Info().
+						Str("Hostname", msg.GetPing().Hostname).
+						Int32("port", msg.GetPing().Port).
+						Msg("Adding to cluster")
+
 					ClusterService.AddToCluster(p)
 					Log.Info().Str("Hostname", host).
 						Int32("Port", port).
