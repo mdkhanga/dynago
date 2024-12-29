@@ -29,3 +29,7 @@ func (q *MessageQueue) Dequeue() *pb.ServerMessage {
 	q.messages = q.messages[1:]
 	return msg
 }
+
+func (q *MessageQueue) Length() int {
+	return len(q.messages)
+}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/mdkhanga/kvstore/config"
 	"github.com/mdkhanga/kvstore/logger"
-	m "github.com/mdkhanga/kvstore/models"
 )
 
 var (
@@ -19,18 +18,18 @@ var (
 
 type cluster struct {
 	mu         sync.Mutex
-	clusterMap map[string]*m.ClusterMember
+	clusterMap map[string]*Peer
 }
 
 type IClusterService interface {
-	AddToCluster(m *m.ClusterMember) error
+	AddToCluster(m *Peer) error
 	RemoveFromCluster(Hostname string, port int32) error
-	ListCluster() ([]*m.ClusterMember, error)
+	ListCluster() ([]*Peer, error)
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
 }
 
-func (c *cluster) AddToCluster(m *m.ClusterMember) error {
+func (c *cluster) AddToCluster(m *Peer) error {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -58,12 +57,12 @@ func (c *cluster) RemoveFromCluster(Hostname string, port int32) error {
 	return nil
 }
 
-func (c *cluster) ListCluster() ([]*m.ClusterMember, error) {
+func (c *cluster) ListCluster() ([]*Peer, error) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	members := make([]*m.ClusterMember, 0, len(c.clusterMap))
+	members := make([]*Peer, 0, len(c.clusterMap))
 	for _, member := range c.clusterMap {
 		members = append(members, member)
 	}
@@ -82,7 +81,7 @@ func New() IClusterService {
 
 	return &cluster{
 		mu:         sync.Mutex{},
-		clusterMap: make(map[string]*m.ClusterMember),
+		clusterMap: make(map[string]*Peer),
 	}
 }
 
@@ -94,13 +93,13 @@ func (c *cluster) ClusterInfoGossip() {
 
 		var items []string
 		for _, member := range c.clusterMap {
-			items = append(items, fmt.Sprintf("%s:%d", member.Host, member.Port))
+			items = append(items, fmt.Sprintf("%s:%d", *member.Host, *member.Port))
 
-			if member.Host == cfg.Hostname && member.Port == cfg.Port {
+			if *member.Host == cfg.Hostname && *member.Port == cfg.Port {
 				continue
 			}
 
-			Log.Info().Str("Sending cluster info msg to", member.Host).Int32("and", member.Port).Send()
+			Log.Info().Str("Sending cluster info msg to", *member.Host).Int32("and", *member.Port).Send()
 		}
 
 		result := strings.Join(items, ", ")

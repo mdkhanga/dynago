@@ -6,16 +6,12 @@ import (
 
 	"net"
 	"sync"
-	"time"
 
 	"github.com/mdkhanga/kvstore/cluster"
 	pb "github.com/mdkhanga/kvstore/kvmessages"
 	"github.com/mdkhanga/kvstore/logger"
-	"github.com/mdkhanga/kvstore/models"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	peer "google.golang.org/grpc/peer"
-	status "google.golang.org/grpc/status"
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -53,6 +49,7 @@ func (q *MessageQueue) Enqueue(msg *pb.ServerMessage) {
 
 // Dequeue removes and returns the oldest message from the queue
 func (q *MessageQueue) Dequeue() *pb.ServerMessage {
+
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if len(q.messages) == 0 {
@@ -65,33 +62,45 @@ func (q *MessageQueue) Dequeue() *pb.ServerMessage {
 
 func (s *Server) Communicate(stream pb.KVSevice_CommunicateServer) error {
 
-	sendMessageQueue := &MessageQueue{}
-	receiveMessageQueue := &MessageQueue{}
+	Log.Info().Msg("Server received a request to connect")
 
-	stopChan := make(chan struct{})
+	p := cluster.NewPeer(stream)
 
-	var once sync.Once
+	p.Init()
 
-	// Function to safely close the stopChan
-	closeStopChan := func() {
-		once.Do(func() {
-			close(stopChan)
-		})
-	}
+	Log.Info().Msg("Established a peer ")
 
-	go receiveLoop(stream, receiveMessageQueue, stopChan, closeStopChan)
+	/*
+		sendMessageQueue := &MessageQueue{}
+		receiveMessageQueue := &MessageQueue{}
 
-	go processMessageLoop(&stream, receiveMessageQueue, sendMessageQueue, stopChan, closeStopChan)
+		stopChan := make(chan struct{})
 
-	go sendLoop(stream, sendMessageQueue, stopChan, closeStopChan)
+		var once sync.Once
 
-	<-stopChan
-	Log.Info().Msg("Stopping message processing due to stream error")
+		// Function to safely close the stopChan
+		closeStopChan := func() {
+			once.Do(func() {
+				close(stopChan)
+			})
+		}
 
-	return nil
+		go receiveLoop(stream, receiveMessageQueue, stopChan, closeStopChan)
+
+		go processMessageLoop(&stream, receiveMessageQueue, sendMessageQueue, stopChan, closeStopChan)
+
+		go sendLoop(stream, sendMessageQueue, stopChan, closeStopChan)
+
+		<-stopChan
+		Log.Info().Msg("Stopping message processing due to stream error")
+
+		return nil
+
+	*/
 
 	// Block main goroutine to keep stream open
 	// select {}
+	return nil
 }
 
 func StartGrpcServer(hostPtr *string, portPtr *string) {
@@ -111,6 +120,7 @@ func StartGrpcServer(hostPtr *string, portPtr *string) {
 
 }
 
+/*
 func receiveLoop(stream pb.KVSevice_CommunicateServer, messageQueue *MessageQueue, stopChan chan struct{}, closeStopChan func()) {
 
 	ctx := stream.Context()
@@ -249,3 +259,5 @@ func processMessageLoop(stream *pb.KVSevice_CommunicateServer, receiveMessageQue
 	}
 
 }
+
+*/

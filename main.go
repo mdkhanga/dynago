@@ -48,7 +48,8 @@ func main() {
 
 	config.Init(*host, portInt32)
 
-	cluster.ClusterService.AddToCluster(&m.ClusterMember{Host: *host, Port: portInt32})
+	// cluster.ClusterService.AddToCluster(&m.ClusterMember{Host: *host, Port: portInt32})
+	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: host, Port: &portInt32})
 	go cluster.ClusterService.ClusterInfoGossip()
 
 	router := gin.Default()
