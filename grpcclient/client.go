@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mdkhanga/kvstore/cluster"
 	pb "github.com/mdkhanga/kvstore/kvmessages"
 	"github.com/mdkhanga/kvstore/logger"
 	"github.com/mdkhanga/kvstore/utils"
@@ -225,6 +226,7 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 		} else if msg.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
 
 			Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
+			cluster.ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
 		}
 
 		// For now do nothing with the msg

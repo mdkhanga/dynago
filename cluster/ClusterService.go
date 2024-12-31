@@ -28,6 +28,7 @@ type IClusterService interface {
 	ListCluster() ([]*Peer, error)
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
+	MergePeerLists(received []*pb.Member)
 }
 
 func (c *cluster) AddToCluster(m *Peer) error {
@@ -137,6 +138,8 @@ func (c *cluster) ClusterInfoGossip() {
 }
 
 func (c *cluster) MergePeerLists(received []*pb.Member) {
+
+	Log.Info().Msg("Merging peer lists")
 
 	for _, m := range received {
 
