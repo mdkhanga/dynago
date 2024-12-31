@@ -135,3 +135,34 @@ func (c *cluster) ClusterInfoGossip() {
 	}
 
 }
+
+func (c *cluster) MergePeerLists(received []*pb.Member) {
+
+	for _, m := range received {
+
+		key := fmt.Sprintf("%s:%d", m.Hostname, m.Port)
+
+		if existingPeer, exists := c.clusterMap[key]; exists {
+			// Conflict resolution based on timestamp
+			if m.Timestamp > existingPeer.Timestamp {
+				c.clusterMap[key] = &Peer{
+					Host:      &m.Hostname,
+					Port:      &m.Port,
+					Timestamp: m.Timestamp,
+					Status:    int(m.Status.Number()),
+				}
+			}
+		} else {
+			// New peer
+			c.clusterMap[key] = &Peer{
+				Host:      &m.Hostname,
+				Port:      &m.Port,
+				Timestamp: m.Timestamp,
+				Status:    int(m.Status.Number()),
+			}
+		}
+
+	}
+
+	return
+}
