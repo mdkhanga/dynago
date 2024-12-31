@@ -17,6 +17,9 @@ type Peer struct {
 	stream      pb.KVSevice_CommunicateServer
 	inMessages  utils.MessageQueue
 	outMessages utils.MessageQueue
+	Timestamp   int64
+	Status      int
+	mine        bool // true means peer is directly connected to me
 }
 
 type IPeer interface {

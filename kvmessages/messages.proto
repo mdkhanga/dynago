@@ -47,9 +47,18 @@ message ServerMessage {
   }
 }
 
+enum MemberStatus {
+  ACTIVE = 0;
+  INACTIVE = 1;
+  UNKNOWN = 2;
+}
+
 message Member {
   string hostname = 1; // Hostname of the cluster member.
   int32 port = 2;      // Port of the cluster member.
+  int64 timestamp = 3;
+  MemberStatus status = 4;
+
 }
 
 message Cluster {
@@ -67,6 +76,5 @@ message ClusterInfoResponse {
   }
 
   Status status = 1;          // Status of the response.
-  Cluster add_members = 2;    // Members to be added, if any.
-  Cluster remove_members = 3; // Members to be removed, if any.
+  Cluster cluster = 2;    // merged cluster
 }

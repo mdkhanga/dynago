@@ -94,10 +94,13 @@ func (c *cluster) ClusterInfoGossip() {
 
 		var items []string
 		members := make([]*pb.Member, len(c.clusterMap))
+
+		i := 0
 		for _, pr := range c.clusterMap {
 			items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 
-			members = append(members, &pb.Member{Hostname: *pr.Host, Port: *pr.Port})
+			members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port}
+			i++
 
 			if *pr.Host == cfg.Hostname && *pr.Port == cfg.Port {
 				continue
