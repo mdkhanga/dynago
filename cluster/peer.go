@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/mdkhanga/kvstore/kvmessages"
+	pb "github.com/mdkhanga/dynago/kvmessages"
 
-	"github.com/mdkhanga/kvstore/utils"
+	"github.com/mdkhanga/dynago/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

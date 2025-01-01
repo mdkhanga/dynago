@@ -3,7 +3,7 @@ package utils
 import (
 	"sync"
 
-	pb "github.com/mdkhanga/kvstore/kvmessages"
+	pb "github.com/mdkhanga/dynago/kvmessages"
 )
 
 type MessageQueue struct {

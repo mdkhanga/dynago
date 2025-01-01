@@ -1,8 +1,8 @@
 package models
 
 import (
-	pb "github.com/mdkhanga/kvstore/kvmessages"
-	"github.com/mdkhanga/kvstore/utils"
+	pb "github.com/mdkhanga/dynago/kvmessages"
+	"github.com/mdkhanga/dynago/utils"
 )
 
 type KeyValue struct {

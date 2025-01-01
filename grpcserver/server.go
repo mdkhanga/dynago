@@ -7,9 +7,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/mdkhanga/kvstore/cluster"
-	pb "github.com/mdkhanga/kvstore/kvmessages"
-	"github.com/mdkhanga/kvstore/logger"
+	"github.com/mdkhanga/dynago/cluster"
+	pb "github.com/mdkhanga/dynago/kvmessages"
+	"github.com/mdkhanga/dynago/logger"
 	"google.golang.org/grpc"
 	peer "google.golang.org/grpc/peer"
 )

@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mdkhanga/kvstore/grpcserver"
-	m "github.com/mdkhanga/kvstore/models"
+	"github.com/mdkhanga/dynago/grpcserver"
+	m "github.com/mdkhanga/dynago/models"
 
-	client "github.com/mdkhanga/kvstore/grpcclient"
+	client "github.com/mdkhanga/dynago/grpcclient"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mdkhanga/kvstore/cluster"
-	"github.com/mdkhanga/kvstore/config"
-	"github.com/mdkhanga/kvstore/logger"
-	"github.com/mdkhanga/kvstore/utils"
+	"github.com/mdkhanga/dynago/cluster"
+	"github.com/mdkhanga/dynago/config"
+	"github.com/mdkhanga/dynago/logger"
+	"github.com/mdkhanga/dynago/utils"
 )
 
 var kvMap map[string]string

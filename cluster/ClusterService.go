@@ -7,9 +7,9 @@ import (
 
 	"time"
 
-	"github.com/mdkhanga/kvstore/config"
-	pb "github.com/mdkhanga/kvstore/kvmessages"
-	"github.com/mdkhanga/kvstore/logger"
+	"github.com/mdkhanga/dynago/config"
+	pb "github.com/mdkhanga/dynago/kvmessages"
+	"github.com/mdkhanga/dynago/logger"
 )
 
 var (

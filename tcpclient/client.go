@@ -8,7 +8,7 @@ import (
 
 	"encoding/binary"
 
-	"github.com/mdkhanga/kvstore/messages"
+	"github.com/mdkhanga/dynago/messages"
 )
 
 func Connect(hostport string) (net.Conn, error) {

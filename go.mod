@@ -1,12 +1,14 @@
-module github.com/mdkhanga/kvstore
+module github.com/mdkhanga/dynago
 
 go 1.21.5
 
-require github.com/gin-gonic/gin v1.9.1
+require (
+	github.com/gin-gonic/gin v1.9.1
+	github.com/rs/zerolog v1.33.0
+)
 
 require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/rs/zerolog v1.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 )
 
@@ -34,6 +36,6 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/grpc v1.66.0
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
