@@ -1,5 +1,5 @@
-# DynamoGo
-A distributed kvstore implementation of a key value store. 
+# dynago
+A distributed key value store like Dynamo or Cassandra written in Go.
 
 The inspiration comes from the Amazon Dynamo paper.  
 https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
