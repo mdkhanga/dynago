@@ -18,7 +18,7 @@ type Peer struct {
 	inMessages  utils.MessageQueue
 	outMessages utils.MessageQueue
 	Timestamp   int64
-	Status      int
+	Status      int  // 0 = Active, 1 = Inactive, 2 = unknown
 	mine        bool // true means peer is directly connected to me
 }
 
@@ -51,6 +51,8 @@ func (p *Peer) Init() {
 		once.Do(func() {
 			close(stopChan)
 		})
+
+		ClusterService.RemoveFromCluster(*p.Host, *p.Port)
 	}
 
 	go p.receiveLoop(stopChan, closeStopChan)
@@ -102,7 +104,7 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 				}
 			}
 
-			Log.Info().Any("Received message of type:", in.Type).Send()
+			// Log.Info().Any("Received message of type:", in.Type).Send()
 			if in.Type == pb.MessageType_PING {
 				Log.Info().Int32("hello", in.GetPing().Hello).
 					Str("Hostname", in.GetPing().Hostname).
@@ -110,7 +112,7 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 					Msg("Received Ping message from the stream")
 
 				p.inMessages.Enqueue(in)
-				Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
+				// Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
 			}
 
 		}

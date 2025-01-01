@@ -55,7 +55,8 @@ func (c *cluster) RemoveFromCluster(Hostname string, port int32) error {
 		return fmt.Errorf("member %s does not exist in the cluster", key)
 	}
 
-	delete(c.clusterMap, key)
+	// delete(c.clusterMap, key)
+	c.clusterMap[key].Status = 1
 	return nil
 }
 
@@ -98,14 +99,15 @@ func (c *cluster) ClusterInfoGossip() {
 
 		i := 0
 		for _, pr := range c.clusterMap {
+
+			if *&pr.Status != 0 {
+				continue
+			}
+
 			items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 
 			members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port}
 			i++
-
-			if *pr.Host == cfg.Hostname && *pr.Port == cfg.Port {
-				continue
-			}
 
 		}
 
@@ -124,7 +126,7 @@ func (c *cluster) ClusterInfoGossip() {
 				continue
 			}
 
-			Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
+			// Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
 			pr.outMessages.Enqueue(&clsServerMsg)
 
 		}
@@ -167,5 +169,4 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 
 	}
 
-	return
 }

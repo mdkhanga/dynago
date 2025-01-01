@@ -219,7 +219,7 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 			}
 
 		}
-		Log.Info().Any("Received message of type:", msg.Type).Send()
+		// Log.Info().Any("Received message of type:", msg.Type).Send()
 
 		if msg.Type == pb.MessageType_PING_RESPONSE {
 			Log.Info().Int32("Received Ping message from the stream ", msg.GetPingResponse().Hello)
@@ -256,7 +256,7 @@ func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}, myhost *st
 
 			sendMessageQueue.Enqueue(msg)
 
-			Log.Info().Int("Server Queue length", len(sendMessageQueue.messages)).Send()
+			// Log.Info().Int("Server Queue length", len(sendMessageQueue.messages)).Send()
 
 		}
 
