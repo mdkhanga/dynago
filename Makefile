@@ -6,7 +6,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 
 # Name of the binary executable
-BINARY_NAME=kvstore
+BINARY_NAME=dynago
 
 # Main build target
 all: build
