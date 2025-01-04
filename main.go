@@ -14,6 +14,7 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	"github.com/mdkhanga/dynago/config"
 	"github.com/mdkhanga/dynago/logger"
+	"github.com/mdkhanga/dynago/server"
 	"github.com/mdkhanga/dynago/utils"
 )
 
@@ -52,10 +53,10 @@ func main() {
 	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: host, Port: &portInt32})
 	go cluster.ClusterService.ClusterInfoGossip()
 
-	router := gin.Default()
-	router.GET("/kvstore", getInfo)
-	router.GET("/kvstore/:key", getValue)
-	router.POST("/kvstore", setValue)
+	// router := gin.Default()
+	// router.GET("/kvstore", getInfo)
+	// router.GET("/kvstore/:key", getValue)
+	// router.POST("/kvstore", setValue)
 
 	go grpcserver.StartGrpcServer(host, portPtr)
 
@@ -63,7 +64,10 @@ func main() {
 		go client.CallGrpcServerv2(host, portPtr, seed)
 	}
 
-	router.Run(":" + *httpPort)
+	// router.Run(":" + *httpPort)
+	httpPortInt32, _ := utils.StringToInt32(*httpPort)
+	server := server.New(*host, httpPortInt32)
+	server.Start()
 
 }
 

@@ -32,7 +32,7 @@ make
 
 -i ip address to bind server to
 -p grpc port for server to server communication
--h http port for client communication
+-h http port for client communication (default 8080)
 -seed another server to connect to
 
 ### Start a third server

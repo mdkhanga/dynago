@@ -5,7 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mdkhanga/dynago/logger"
 	m "github.com/mdkhanga/dynago/models"
+)
+
+var (
+	Log = logger.WithComponent("server").Log
 )
 
 type server struct {
@@ -26,10 +31,15 @@ func New(host string, port int32) IServer {
 
 func (s *server) Start() {
 
+	Log.Info().Msg("Starting Dynago server ")
+
 	router := gin.Default()
 	router.GET("/kvstore", getInfo)
 	router.GET("/kvstore/:key", s.getValue)
 	router.POST("/kvstore", s.setValue)
+
+	rbind := fmt.Sprintf("%s:%d", s.Host, s.Port)
+	router.Run(rbind)
 
 }
 
