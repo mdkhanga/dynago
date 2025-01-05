@@ -6,7 +6,8 @@ import (
 
 type Config struct {
 	Hostname string
-	Port     int32
+	GrpcPort int32
+	HttpPort int32
 }
 
 var (
@@ -15,11 +16,12 @@ var (
 )
 
 // Initialize the configuration (singleton)
-func Init(hostname string, port int32) {
+func Init(hostname string, grpcport int32, httpport int32) {
 	once.Do(func() {
 		config = &Config{
 			Hostname: hostname,
-			Port:     port,
+			GrpcPort: grpcport,
+			HttpPort: httpport,
 		}
 	})
 }

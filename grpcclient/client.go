@@ -8,7 +8,6 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
-	"github.com/mdkhanga/dynago/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -44,7 +43,7 @@ func (q *MessageQueue) Dequeue() *pb.ServerMessage {
 	return msg
 }
 
-func CallGrpcServer(hostport string) {
+/* func CallGrpcServer(hostport string) {
 
 	Log.Info().Msg(" Calling grpc server")
 
@@ -108,16 +107,16 @@ func CallGrpcServer(hostport string) {
 
 	}
 
-}
+} */
 
-func CallGrpcServerv2(myhost *string, myport *string, seedHostport *string) error {
+func CallGrpcServerv2(myhost *string, myport *int32, seedHostport *string) error {
 
-	myportInt32, err := utils.StringToInt32(*myport)
+	/* myportInt32, err := utils.StringToInt32(*myport)
 
 	if err != nil {
 		Log.Error().AnErr("Error converting port to int32", err)
 		return err
-	}
+	} */
 
 	for {
 
@@ -157,7 +156,7 @@ func CallGrpcServerv2(myhost *string, myport *string, seedHostport *string) erro
 
 		go receiveLoop(stream, receiveMessageQueue, stopChan)
 
-		go pingLoop(sendMessageQueue, stopChan, myhost, &myportInt32)
+		go pingLoop(sendMessageQueue, stopChan, myhost, myport)
 
 		<-stopChan
 		Log.Info().Msg("Stopping message processing due to stream error")

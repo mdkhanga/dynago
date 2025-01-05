@@ -73,9 +73,9 @@ func (s *Server) Communicate(stream pb.KVSevice_CommunicateServer) error {
 	return nil
 }
 
-func StartGrpcServer(hostPtr *string, portPtr *string) {
+func StartGrpcServer(hostPtr *string, portPtr *int32) {
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", *hostPtr, *portPtr))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
 	// lis, err := net.Listen("tcp", fmt.Sprintf("192.168.1.15:%s", *portPtr))
 	if err != nil {
 		Log.Error().AnErr("failed to listen:", err).Send()

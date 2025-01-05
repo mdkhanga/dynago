@@ -122,11 +122,11 @@ func (c *cluster) ClusterInfoGossip() {
 
 		for _, pr := range c.clusterMap {
 
-			if *pr.Host == cfg.Hostname && *pr.Port == cfg.Port {
+			if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 				continue
 			}
 
-			// Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
+			Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
 			pr.outMessages.Enqueue(&clsServerMsg)
 
 		}
