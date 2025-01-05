@@ -47,7 +47,7 @@ func (s *server) Start() {
 	go grpcserver.StartGrpcServer(&s.Host, &s.GrpcPort)
 
 	if s.Seed != "" {
-		go client.CallGrpcServerv2(&s.Host, &s.GrpcPort, &s.Seed)
+		go client.CallGrpcServer(&s.Host, &s.GrpcPort, &s.Seed)
 	}
 
 	router := gin.Default()
