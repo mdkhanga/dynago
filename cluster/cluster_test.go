@@ -8,6 +8,9 @@ import (
 	"github.com/mdkhanga/dynago/server"
 )
 
+/* Tests for cluster setup
+ */
+
 var _ = ginkgo.Describe("cluster tests", func() {
 	var (
 		serverA server.IServer
