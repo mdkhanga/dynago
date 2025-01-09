@@ -40,7 +40,7 @@ var _ = ginkgo.Describe("cluster tests", func() {
 	ginkgo.It("should synchronize peer lists across all servers", func() {
 
 		/*
-			// Introduce servers to each other
+
 			serverA.AddPeer("localhost:8081")
 			serverB.AddPeer("localhost:8082")
 
