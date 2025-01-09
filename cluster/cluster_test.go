@@ -7,6 +7,7 @@ import (
 
 	"github.com/mdkhanga/dynago/logger"
 	"github.com/mdkhanga/dynago/server"
+	"github.com/onsi/gomega"
 )
 
 /* Tests for cluster setup
@@ -27,11 +28,12 @@ var _ = ginkgo.Describe("cluster tests", func() {
 
 		// Start the servers
 		go serverA.Start()
+		time.Sleep(2 * time.Second)
 		go serverB.Start()
+		time.Sleep(2 * time.Second)
 		go serverC.Start()
+		time.Sleep(3 * time.Second)
 
-		// Give servers time to start
-		time.Sleep(1 * time.Second)
 	})
 
 	ginkgo.AfterEach(func() {
@@ -45,22 +47,17 @@ var _ = ginkgo.Describe("cluster tests", func() {
 
 		logger.Globallogger.Info("Test")
 
-		/*
+		peersA := serverA.GetPeerList()
+		peersB := serverB.GetPeerList()
+		peersC := serverC.GetPeerList()
 
-			serverA.AddPeer("localhost:8081")
-			serverB.AddPeer("localhost:8082")
+		logger.Globallogger.Log.Info().Any("A list", peersA).Send()
+		logger.Globallogger.Log.Info().Any("B list", peersB).Send()
+		logger.Globallogger.Log.Info().Any("C list", peersC).Send()
 
-			// Allow time for gossip protocol to run
-			time.Sleep(3 * time.Second)
+		// Assert that all servers have the same peer list
+		gomega.Expect(peersA).To(gomega.ConsistOf(peersB))
+		gomega.Expect(peersA).To(gomega.ConsistOf(peersC))
 
-			// Collect peer lists from all servers
-			peersA := serverA.GetPeerList()
-			peersB := serverB.GetPeerList()
-			peersC := serverC.GetPeerList()
-
-			// Assert that all servers have the same peer list
-			gomega.Expect(peersA).To(gomega.ConsistOf(peersB))
-			gomega.Expect(peersA).To(gomega.ConsistOf(peersC))
-		*/
 	})
 })

@@ -28,6 +28,7 @@ type server struct {
 type IServer interface {
 	Start()
 	Stop()
+	GetPeerList() []string
 }
 
 func New(host string, grpcport int32, httpPort int32, seed string) IServer {
@@ -80,4 +81,20 @@ func (s *server) setValue(c *gin.Context) {
 	c.BindJSON(&input)
 	s.kvMap[input.Key] = input.Value
 	c.JSON(http.StatusOK, "Welcome to keystore")
+}
+
+func (s *server) GetPeerList() []string {
+
+	peers, _ := cluster.ClusterService.ListCluster()
+
+	peerhostports := make([]string, len(peers))
+
+	for i, p := range peers {
+		ph := fmt.Sprintf("%s:%d", *p.Host, *p.Port)
+		peerhostports[i] = ph
+
+	}
+
+	return peerhostports
+
 }
