@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 
+	"github.com/mdkhanga/dynago/logger"
 	"github.com/mdkhanga/dynago/server"
 )
 
@@ -41,6 +42,8 @@ var _ = ginkgo.Describe("cluster tests", func() {
 	})
 
 	ginkgo.It("should synchronize peer lists across all servers", func() {
+
+		logger.Globallogger.Info("Test")
 
 		/*
 
