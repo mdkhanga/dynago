@@ -7,6 +7,7 @@ https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
 Plan:  
 Key value store  
 Cluster - no leader all servers equal  
+Quorum
 Partitioning using consistent hashing  
 Storage - SSTable  
 Gossip  
