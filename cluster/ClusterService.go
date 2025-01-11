@@ -41,6 +41,8 @@ func (c *cluster) AddToCluster(m *Peer) error {
 		return fmt.Errorf("member %s already exists in the cluster", key)
 	}
 
+	m.Status = 0
+
 	c.clusterMap[key] = m
 	return nil
 }
