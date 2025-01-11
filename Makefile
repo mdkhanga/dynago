@@ -23,7 +23,7 @@ run:
 	./$(BINARY_NAME)
 
 test:
-	$(GOTEST) -v ./...
+	ginkgo -r
 
 deps:
 	$(GOGET) github.com/example/dependency
