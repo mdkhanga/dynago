@@ -182,7 +182,7 @@ func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}, myhost *st
 
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 
 	}
 

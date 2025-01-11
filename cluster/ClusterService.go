@@ -133,7 +133,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 		result := strings.Join(items, ", ")
 		Log.Info().Str("Cluster members", result).Send()
-		time.Sleep(5 * time.Second) // Wait before checking again
+		time.Sleep(3 * time.Second) // Wait before checking again
 		continue
 	}
 

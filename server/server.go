@@ -42,7 +42,7 @@ func (s *server) Start() {
 
 	config.Init(s.Host, s.GrpcPort, s.HttpPort)
 
-	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort})
+	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Mine: true})
 	go cluster.ClusterService.ClusterInfoGossip()
 
 	go grpcserver.StartGrpcServer(&s.Host, &s.GrpcPort)

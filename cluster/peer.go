@@ -18,7 +18,7 @@ type Peer struct {
 	OutMessages utils.MessageQueue
 	Timestamp   int64
 	Status      int  // 0 = Active, 1 = Inactive, 2 = unknown
-	mine        bool // true means peer is directly connected to me
+	Mine        bool // true means peer is directly connected to me
 }
 
 type IPeer interface {
@@ -195,6 +195,8 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 
 					p.Host = &host
 					p.Port = &port
+					p.Timestamp = time.Now().UnixMilli()
+					p.Mine = false
 
 					Log.Info().
 						Str("Hostname", msg.GetPing().Hostname).
@@ -206,6 +208,9 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 						Int32("Port", port).
 						Msg("Added new server to Cluster")
 
+				} else {
+					// just update the timestamp
+					p.Timestamp = time.Now().UnixMilli()
 				}
 
 			case pb.MessageType_KEY_VALUE:
