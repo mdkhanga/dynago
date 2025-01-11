@@ -127,7 +127,7 @@ func (c *cluster) ClusterInfoGossip() {
 			}
 
 			Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
-			pr.outMessages.Enqueue(&clsServerMsg)
+			pr.OutMessages.Enqueue(&clsServerMsg)
 
 		}
 

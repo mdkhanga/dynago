@@ -38,5 +38,6 @@ func PingHandler(msg *pb.ServerMessage, p *cluster.Peer) *pb.ServerMessage {
 			Msg("Added new server to Cluster")
 	}
 
-	return response
+	p.OutMessages.Enqueue(response)
+	return nil
 }

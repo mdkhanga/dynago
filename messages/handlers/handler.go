@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Log = logger.WithComponent("grpcserver").Log
+	Log = logger.WithComponent("handlers").Log
 )
 
 type MessageHandler func(msg *pb.ServerMessage, p *cluster.Peer) *pb.ServerMessage
@@ -41,6 +41,6 @@ func (r *HandlerRegistry) HandleMessage(msg *pb.ServerMessage, p *cluster.Peer) 
 
 func (r *HandlerRegistry) Init() {
 
-	r.RegisterHandler(pb.MessageType_PING)
+	r.RegisterHandler(pb.MessageType_PING, PingHandler)
 
 }

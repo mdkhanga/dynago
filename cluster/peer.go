@@ -5,7 +5,6 @@ import (
 	"time"
 
 	pb "github.com/mdkhanga/dynago/kvmessages"
-
 	"github.com/mdkhanga/dynago/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,8 +14,8 @@ type Peer struct {
 	Host        *string
 	Port        *int32
 	stream      pb.KVSevice_CommunicateServer
-	inMessages  utils.MessageQueue
-	outMessages utils.MessageQueue
+	InMessages  utils.MessageQueue
+	OutMessages utils.MessageQueue
 	Timestamp   int64
 	Status      int  // 0 = Active, 1 = Inactive, 2 = unknown
 	mine        bool // true means peer is directly connected to me
@@ -30,13 +29,13 @@ type IPeer interface {
 
 func (p *Peer) ReceivedMessage(message *pb.ServerMessage) {
 
-	p.inMessages.Enqueue(message)
+	p.InMessages.Enqueue(message)
 
 }
 
 func (p *Peer) SendMessage(message *pb.ServerMessage) {
 
-	p.outMessages.Enqueue(message)
+	p.OutMessages.Enqueue(message)
 
 }
 
@@ -70,8 +69,8 @@ func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
 
 	return &Peer{
 		stream:      s,
-		inMessages:  utils.MessageQueue{},
-		outMessages: utils.MessageQueue{},
+		InMessages:  utils.MessageQueue{},
+		OutMessages: utils.MessageQueue{},
 	}
 }
 
@@ -111,7 +110,7 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 					Int32("port", in.GetPing().Port).
 					Msg("Received Ping message from the stream")
 
-				p.inMessages.Enqueue(in)
+				p.InMessages.Enqueue(in)
 				// Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
 			}
 
@@ -138,7 +137,7 @@ func (p *Peer) sendLoop(stopChan chan struct{}, closeStopChan func()) {
 		default:
 			// Send a message to the client (dummy example message)
 
-			msg := p.outMessages.Dequeue()
+			msg := p.OutMessages.Dequeue()
 			if msg == nil {
 				time.Sleep(1 * time.Second) // Wait before checking again
 				continue
@@ -167,7 +166,7 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 
 		default:
 
-			msg := p.inMessages.Dequeue()
+			msg := p.InMessages.Dequeue()
 			if msg == nil {
 				time.Sleep(1 * time.Second) // Wait before checking again
 				continue
@@ -216,7 +215,7 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 				Log.Info().Msg("Unknown message type received")
 			}
 
-			p.outMessages.Enqueue(response)
+			p.OutMessages.Enqueue(response)
 
 		}
 
