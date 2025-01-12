@@ -29,6 +29,7 @@ type IClusterService interface {
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
 	MergePeerLists(received []*pb.Member)
+	MonitorPeers()
 }
 
 func (c *cluster) AddToCluster(m *Peer) error {
@@ -103,6 +104,7 @@ func (c *cluster) ClusterInfoGossip() {
 		for _, pr := range c.clusterMap {
 
 			if *&pr.Status != 0 {
+				Log.Info().Int32("peer ", *pr.Port).Any("Status", pr.Status)
 				continue
 			}
 
@@ -171,4 +173,27 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 
 	}
 
+}
+
+func (c *cluster) MonitorPeers() {
+	for {
+		// Lock the clusterMap for safe access
+		c.mu.Lock()
+		now := time.Now().UnixMilli()
+
+		for key, peer := range c.clusterMap {
+			// Check if the peer's timestamp is older than 5 seconds
+			if now-peer.Timestamp > 5 && peer.Mine == false {
+				peer.Status = 1 // Mark as inactive
+				// Optionally log or take further action
+				Log.Info().Str("Peer marked as inactive", key)
+			}
+		}
+
+		// Unlock after processing
+		c.mu.Unlock()
+
+		// Sleep for a periodic interval (e.g., 1 second)
+		time.Sleep(1 * time.Second)
+	}
 }
