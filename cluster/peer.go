@@ -211,6 +211,7 @@ func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) 
 				} else {
 					// just update the timestamp
 					p.Timestamp = time.Now().UnixMilli()
+					p.Status = 0
 				}
 
 			case pb.MessageType_KEY_VALUE:

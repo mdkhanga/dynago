@@ -101,19 +101,38 @@ func (c *cluster) ClusterInfoGossip() {
 		members := make([]*pb.Member, len(c.clusterMap))
 
 		i := 0
-		for _, pr := range c.clusterMap {
+		for key, pr := range c.clusterMap {
 
-			if *&pr.Status != 0 {
-				Log.Info().Int32("peer ", *pr.Port).Any("Status", pr.Status)
+			now := time.Now().UnixMilli()
+
+			if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+				pr.Timestamp = time.Now().UnixMilli()
+			}
+
+			if now-pr.Timestamp > 10000 && pr.Mine == false {
+				pr.Status = 1 // Mark as inactive
+				// Optionally log or take further action
+				Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
 				continue
 			}
 
+			/* if *&pr.Status != 0 {
+				Log.Info().Int32("skipping peer ", *pr.Port).Any("Status", pr.Status).Send()
+				continue
+			} */
+
 			items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 
-			members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port}
+			members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
+
+			Log.Debug().Any("Peer", pr).Send()
+			Log.Debug().Any("Member", members[i]).Send()
+
 			i++
 
 		}
+
+		// Log.Debug().Any("Members to send", members).Send()
 
 		cls := pb.Cluster{Members: members}
 
@@ -130,7 +149,7 @@ func (c *cluster) ClusterInfoGossip() {
 				continue
 			}
 
-			Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
+			//Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
 			pr.OutMessages.Enqueue(&clsServerMsg)
 
 		}
@@ -145,7 +164,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 func (c *cluster) MergePeerLists(received []*pb.Member) {
 
-	Log.Info().Msg("Merging peer lists")
+	Log.Info().Any("Merging peer lists", received).Send()
 
 	for _, m := range received {
 
@@ -158,7 +177,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 					Host:      &m.Hostname,
 					Port:      &m.Port,
 					Timestamp: m.Timestamp,
-					Status:    int(m.Status.Number()),
+					Status:    int(m.Status),
 				}
 			}
 		} else {
@@ -167,7 +186,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 				Host:      &m.Hostname,
 				Port:      &m.Port,
 				Timestamp: m.Timestamp,
-				Status:    int(m.Status.Number()),
+				Status:    int(m.Status),
 			}
 		}
 
@@ -178,15 +197,16 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 func (c *cluster) MonitorPeers() {
 	for {
 		// Lock the clusterMap for safe access
+		Log.Info().Msg("In the monitor peer")
 		c.mu.Lock()
 		now := time.Now().UnixMilli()
 
 		for key, peer := range c.clusterMap {
 			// Check if the peer's timestamp is older than 5 seconds
-			if now-peer.Timestamp > 5 && peer.Mine == false {
+			if now-peer.Timestamp > 5000 && peer.Mine == false {
 				peer.Status = 1 // Mark as inactive
 				// Optionally log or take further action
-				Log.Info().Str("Peer marked as inactive", key)
+				Log.Info().Str("Peer marked as inactive", key).Send()
 			}
 		}
 
@@ -194,6 +214,6 @@ func (c *cluster) MonitorPeers() {
 		c.mu.Unlock()
 
 		// Sleep for a periodic interval (e.g., 1 second)
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }

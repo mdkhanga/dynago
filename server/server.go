@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mdkhanga/dynago/cluster"
@@ -42,7 +43,7 @@ func (s *server) Start() {
 
 	config.Init(s.Host, s.GrpcPort, s.HttpPort)
 
-	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Mine: true})
+	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true})
 	go cluster.ClusterService.ClusterInfoGossip()
 	// go cluster.ClusterService.MonitorPeers()
 
