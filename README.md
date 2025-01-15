@@ -29,7 +29,7 @@ make
 
 ### Start a second server
 
-./dynago -i 192.168.1.14 -p 8085 -h 8086 -seed 192.168.1.14:8081
+./dynago -i ip_addr -p 8085 -h 8086 -seed ip_addr_of_seed:8081
 
 -i ip address to bind server to
 -p grpc port for server to server communication
@@ -38,7 +38,7 @@ make
 
 ### Start a third server
 
-./dynago -i 192.168.1.14 -p 8087 -h 8088 -seed 192.168.1.14:8081
+./dynago -i ip_addr -p 8087 -h 8088 -seed ip_addr_of_seed:8081
 
 ### Store a Key/Value 
 
