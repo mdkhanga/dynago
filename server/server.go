@@ -19,11 +19,12 @@ var (
 )
 
 type server struct {
-	Host     string
-	HttpPort int32
-	GrpcPort int32
-	Seed     string
-	kvMap    map[string]string
+	Host       string
+	HttpPort   int32
+	GrpcPort   int32
+	Seed       string
+	kvMap      map[string]string
+	httpServer *http.Server
 }
 
 type IServer interface {
@@ -65,6 +66,42 @@ func (s *server) Start() {
 
 func (s *server) Stop() {
 
+}
+
+func (s *server) startGinServer(rbind string) {
+	router := gin.Default()
+
+	// Define your routes here
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	})
+
+	// Initialize the HTTP server
+	s.httpServer = &http.Server{
+		Addr:    rbind,
+		Handler: router,
+	}
+
+	Log.Info().Str("Starting server at %s\n", rbind).Send()
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		Log.Error().AnErr("Server failed to start: %v\n", err)
+
+	}
+
+}
+
+func (s *server) StopGinServer() {
+	if s.httpServer != nil {
+		Log.Info().Msg("Stopping server immediately...")
+
+		// Forcefully close the server
+		if err := s.httpServer.Close(); err != nil {
+			Log.Fatal().AnErr("Server forced to shutdown with error: %v\n", err)
+		}
+		Log.Info().Msg("Server stopped immediately.")
+	} else {
+		Log.Info().Msg("Server is not running.")
+	}
 }
 
 func getInfo(c *gin.Context) {

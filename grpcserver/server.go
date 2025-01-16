@@ -23,6 +23,8 @@ var (
 	Log = logger.WithComponent("grpcserver").Log
 )
 
+var grpcserver *grpc.Server
+
 // SayHello implements helloworld.GreeterServer
 func (s *Server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
 	Log.Info().Int32("Received", in.GetHello()).Send()
@@ -81,11 +83,24 @@ func StartGrpcServer(hostPtr *string, portPtr *int32) {
 		Log.Error().AnErr("failed to listen:", err).Send()
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterKVSeviceServer(s, &Server{})
+	grpcserver = grpc.NewServer()
+	pb.RegisterKVSeviceServer(grpcserver, &Server{})
 	Log.Info().Any("GRPC server listening at ", lis.Addr().String()).Send()
-	if err := s.Serve(lis); err != nil {
+	if err := grpcserver.Serve(lis); err != nil {
 		Log.Error().AnErr("failed to serve: ", err).Send()
+	}
+
+}
+
+func StopGrpcServer() {
+
+	if grpcserver != nil {
+		Log.Info().Msg("Stopping gRPC server...")
+		grpcserver.Stop()
+		// grpcserver.GracefulStop() // Gracefully stop the server
+		Log.Info().Msg("gRPC server stopped.")
+	} else {
+		Log.Warn().Msg("gRPC server is not running.")
 	}
 
 }
