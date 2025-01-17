@@ -50,21 +50,13 @@ func (s *server) Start() {
 
 	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true})
 	go cluster.ClusterService.ClusterInfoGossip()
-	// go cluster.ClusterService.MonitorPeers()
 
-	go grpcserver.StartGrpcServer(&s.Host, &s.GrpcPort)
+	go s.startGrpcServer(&s.Host, &s.GrpcPort)
 
 	if s.Seed != "" {
 		go client.CallGrpcServer(&s.Host, &s.GrpcPort, &s.Seed)
 	}
 
-	/* router := gin.Default()
-	router.GET("/kvstore", getInfo)
-	router.GET("/kvstore/:key", s.getValue)
-	router.POST("/kvstore", s.setValue)
-
-	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
-	router.Run(rbind) */
 	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
 	s.startGinServer(rbind)
 
@@ -72,7 +64,9 @@ func (s *server) Start() {
 
 func (s *server) Stop() {
 
-	s.StopGinServer()
+	close(cluster.StopGossip)
+	s.stopGinServer()
+	s.stopGrpcServer()
 
 }
 
@@ -98,7 +92,7 @@ func (s *server) startGinServer(rbind string) {
 
 }
 
-func (s *server) StopGinServer() {
+func (s *server) stopGinServer() {
 	if s.httpServer != nil {
 		Log.Info().Msg("Stopping server immediately...")
 
@@ -112,7 +106,7 @@ func (s *server) StopGinServer() {
 	}
 }
 
-func (s *server) StartGrpcServer(hostPtr *string, portPtr *int32) {
+func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
 	// lis, err := net.Listen("tcp", fmt.Sprintf("192.168.1.15:%s", *portPtr))
@@ -129,7 +123,7 @@ func (s *server) StartGrpcServer(hostPtr *string, portPtr *int32) {
 
 }
 
-func (s *server) StopGrpcServer() {
+func (s *server) stopGrpcServer() {
 	if s.grpcServer != nil {
 		Log.Info().Msg("Stopping gRPC server...")
 		// s.grpcServer.GracefulStop() // Gracefully stop the server

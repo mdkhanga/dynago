@@ -15,6 +15,7 @@ import (
 var (
 	ClusterService = New()
 	Log            = logger.WithComponent("cluster").Log
+	StopGossip     chan struct{}
 )
 
 type cluster struct {
@@ -97,67 +98,73 @@ func (c *cluster) ClusterInfoGossip() {
 
 	for {
 
-		var items []string
-		members := make([]*pb.Member, len(c.clusterMap))
+		select {
+		case <-StopGossip:
+			// Signal received to stop the loop
+			Log.Info().Msg("Stopping clusterInfoGossip.")
+			return
+		default:
+			// Do your stuff here
+			Log.Info().Msg("Starting Gossip ..........")
+			time.Sleep(1 * time.Second) // Simulating work
 
-		i := 0
-		for key, pr := range c.clusterMap {
+			var items []string
+			members := make([]*pb.Member, len(c.clusterMap))
 
-			now := time.Now().UnixMilli()
+			i := 0
+			for key, pr := range c.clusterMap {
 
-			if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
-				pr.Timestamp = time.Now().UnixMilli()
+				now := time.Now().UnixMilli()
+
+				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+					pr.Timestamp = time.Now().UnixMilli()
+				}
+
+				if now-pr.Timestamp > 10000 && pr.Mine == false {
+					pr.Status = 1 // Mark as inactive
+					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
+					continue
+				}
+
+				items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
+
+				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
+
+				Log.Debug().Any("Peer", pr).Send()
+				Log.Debug().Any("Member", members[i]).Send()
+
+				i++
+
 			}
 
-			if now-pr.Timestamp > 10000 && pr.Mine == false {
-				pr.Status = 1 // Mark as inactive
-				// Optionally log or take further action
-				Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
-				continue
+			// Log.Debug().Any("Members to send", members).Send()
+
+			cls := pb.Cluster{Members: members}
+
+			clsReq := pb.ClusterInfoRequest{Cluster: &cls}
+
+			clsServerMsg := pb.ServerMessage{
+				Type:    pb.MessageType_CLUSTER_INFO_REQUEST,
+				Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
 			}
 
-			/* if *&pr.Status != 0 {
-				Log.Info().Int32("skipping peer ", *pr.Port).Any("Status", pr.Status).Send()
-				continue
-			} */
+			for _, pr := range c.clusterMap {
 
-			items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
+				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+					continue
+				}
 
-			members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
+				//Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
+				pr.OutMessages.Enqueue(&clsServerMsg)
 
-			Log.Debug().Any("Peer", pr).Send()
-			Log.Debug().Any("Member", members[i]).Send()
-
-			i++
-
-		}
-
-		// Log.Debug().Any("Members to send", members).Send()
-
-		cls := pb.Cluster{Members: members}
-
-		clsReq := pb.ClusterInfoRequest{Cluster: &cls}
-
-		clsServerMsg := pb.ServerMessage{
-			Type:    pb.MessageType_CLUSTER_INFO_REQUEST,
-			Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
-		}
-
-		for _, pr := range c.clusterMap {
-
-			if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
-				continue
 			}
 
-			//Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
-			pr.OutMessages.Enqueue(&clsServerMsg)
-
+			result := strings.Join(items, ", ")
+			Log.Info().Str("Cluster members", result).Send()
+			time.Sleep(3 * time.Second) // Wait before checking again
+			continue
 		}
 
-		result := strings.Join(items, ", ")
-		Log.Info().Str("Cluster members", result).Send()
-		time.Sleep(3 * time.Second) // Wait before checking again
-		continue
 	}
 
 }
