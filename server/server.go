@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -10,8 +11,10 @@ import (
 	"github.com/mdkhanga/dynago/config"
 	client "github.com/mdkhanga/dynago/grpcclient"
 	"github.com/mdkhanga/dynago/grpcserver"
+	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
 	m "github.com/mdkhanga/dynago/models"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -25,6 +28,7 @@ type server struct {
 	Seed       string
 	kvMap      map[string]string
 	httpServer *http.Server
+	grpcServer *grpc.Server
 }
 
 type IServer interface {
@@ -54,17 +58,21 @@ func (s *server) Start() {
 		go client.CallGrpcServer(&s.Host, &s.GrpcPort, &s.Seed)
 	}
 
-	router := gin.Default()
+	/* router := gin.Default()
 	router.GET("/kvstore", getInfo)
 	router.GET("/kvstore/:key", s.getValue)
 	router.POST("/kvstore", s.setValue)
 
 	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
-	router.Run(rbind)
+	router.Run(rbind) */
+	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
+	s.startGinServer(rbind)
 
 }
 
 func (s *server) Stop() {
+
+	s.StopGinServer()
 
 }
 
@@ -101,6 +109,33 @@ func (s *server) StopGinServer() {
 		Log.Info().Msg("Server stopped immediately.")
 	} else {
 		Log.Info().Msg("Server is not running.")
+	}
+}
+
+func (s *server) StartGrpcServer(hostPtr *string, portPtr *int32) {
+
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
+	// lis, err := net.Listen("tcp", fmt.Sprintf("192.168.1.15:%s", *portPtr))
+	if err != nil {
+		Log.Error().AnErr("failed to listen:", err).Send()
+	}
+
+	s.grpcServer = grpc.NewServer()
+	pb.RegisterKVSeviceServer(s.grpcServer, &grpcserver.Server{})
+	Log.Info().Any("GRPC server listening at ", lis.Addr().String()).Send()
+	if err := s.grpcServer.Serve(lis); err != nil {
+		Log.Error().AnErr("failed to serve: ", err).Send()
+	}
+
+}
+
+func (s *server) StopGrpcServer() {
+	if s.grpcServer != nil {
+		Log.Info().Msg("Stopping gRPC server...")
+		// s.grpcServer.GracefulStop() // Gracefully stop the server
+		Log.Info().Msg("gRPC server stopped.")
+	} else {
+		Log.Warn().Msg("gRPC server is not running.")
 	}
 }
 
