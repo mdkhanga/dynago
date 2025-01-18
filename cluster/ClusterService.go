@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	ClusterService = New()
-	Log            = logger.WithComponent("cluster").Log
-	StopGossip     chan struct{}
+	ClusterService               = New()
+	Log                          = logger.WithComponent("cluster").Log
+	StopGossip     chan struct{} = make(chan struct{})
 )
 
 type cluster struct {

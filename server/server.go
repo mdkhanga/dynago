@@ -22,13 +22,14 @@ var (
 )
 
 type server struct {
-	Host       string
-	HttpPort   int32
-	GrpcPort   int32
-	Seed       string
-	kvMap      map[string]string
-	httpServer *http.Server
-	grpcServer *grpc.Server
+	Host         string
+	HttpPort     int32
+	GrpcPort     int32
+	Seed         string
+	kvMap        map[string]string
+	httpServer   *http.Server
+	grpcServer   *grpc.Server
+	grpcListener *net.Listener
 }
 
 type IServer interface {
@@ -64,7 +65,7 @@ func (s *server) Start() {
 
 func (s *server) Stop() {
 
-	close(cluster.StopGossip)
+	// close(cluster.StopGossip)
 	s.stopGinServer()
 	s.stopGrpcServer()
 
@@ -108,7 +109,7 @@ func (s *server) stopGinServer() {
 
 func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
+	grpcListener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
 	// lis, err := net.Listen("tcp", fmt.Sprintf("192.168.1.15:%s", *portPtr))
 	if err != nil {
 		Log.Error().AnErr("failed to listen:", err).Send()
@@ -116,8 +117,8 @@ func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 
 	s.grpcServer = grpc.NewServer()
 	pb.RegisterKVSeviceServer(s.grpcServer, &grpcserver.Server{})
-	Log.Info().Any("GRPC server listening at ", lis.Addr().String()).Send()
-	if err := s.grpcServer.Serve(lis); err != nil {
+	Log.Info().Any("GRPC server listening at ", grpcListener.Addr().String()).Send()
+	if err := s.grpcServer.Serve(grpcListener); err != nil {
 		Log.Error().AnErr("failed to serve: ", err).Send()
 	}
 
@@ -127,6 +128,7 @@ func (s *server) stopGrpcServer() {
 	if s.grpcServer != nil {
 		Log.Info().Msg("Stopping gRPC server...")
 		// s.grpcServer.GracefulStop() // Gracefully stop the server
+		s.grpcServer.Stop()
 		Log.Info().Msg("gRPC server stopped.")
 	} else {
 		Log.Warn().Msg("gRPC server is not running.")

@@ -22,6 +22,32 @@ var _ = ginkgo.Describe("cluster tests", func() {
 
 	ginkgo.BeforeEach(func() {
 		// Initialize servers with unique addresses
+		/* serverA = server.New("localhost", 8090, 8080, "")
+		serverB = server.New("localhost", 8091, 8081, "localhost:8090")
+		serverC = server.New("localhost", 8092, 8082, "locahost:8090")
+
+		// Start the servers
+		go serverA.Start()
+		time.Sleep(2 * time.Second)
+		go serverB.Start()
+		time.Sleep(2 * time.Second)
+		go serverC.Start()
+		time.Sleep(3 * time.Second) */
+
+	})
+
+	ginkgo.AfterEach(func() {
+		// Stop the servers
+		/* serverA.Stop()
+		serverB.Stop()
+		serverC.Stop() */
+	})
+
+	ginkgo.It("should synchronize peer lists across all servers", func() {
+
+		logger.Globallogger.Info("Test")
+
+		// Initialize servers with unique addresses
 		serverA = server.New("localhost", 8090, 8080, "")
 		serverB = server.New("localhost", 8091, 8081, "localhost:8090")
 		serverC = server.New("localhost", 8092, 8082, "locahost:8090")
@@ -33,19 +59,6 @@ var _ = ginkgo.Describe("cluster tests", func() {
 		time.Sleep(2 * time.Second)
 		go serverC.Start()
 		time.Sleep(3 * time.Second)
-
-	})
-
-	ginkgo.AfterEach(func() {
-		// Stop the servers
-		serverA.Stop()
-		serverB.Stop()
-		serverC.Stop()
-	})
-
-	ginkgo.It("should synchronize peer lists across all servers", func() {
-
-		logger.Globallogger.Info("Test")
 
 		peersA := serverA.GetPeerList()
 		peersB := serverB.GetPeerList()
@@ -59,5 +72,43 @@ var _ = ginkgo.Describe("cluster tests", func() {
 		gomega.Expect(peersA).To(gomega.ConsistOf(peersB))
 		gomega.Expect(peersA).To(gomega.ConsistOf(peersC))
 
+		serverA.Stop()
+		serverB.Stop()
+		serverC.Stop()
+
 	})
+
+	/* ginkgo.It("test adding a server", func() {
+
+		logger.Globallogger.Info("Test")
+
+		// Initialize servers with unique addresses
+		serverA = server.New("localhost", 8090, 8080, "")
+		serverB = server.New("localhost", 8091, 8081, "localhost:8090")
+
+		// Start the servers
+		go serverA.Start()
+		time.Sleep(2 * time.Second)
+		go serverB.Start()
+		time.Sleep(2 * time.Second)
+
+		peersA := serverA.GetPeerList()
+		peersB := serverB.GetPeerList()
+
+		logger.Globallogger.Log.Info().Any("A list", peersA).Send()
+		logger.Globallogger.Log.Info().Any("B list", peersB).Send()
+
+		// Assert that all servers have the same peer list
+		gomega.Expect(peersA).To(gomega.ConsistOf(peersB))
+
+		serverC = server.New("localhost", 8092, 8082, "locahost:8090")
+		go serverC.Start()
+		time.Sleep(4 * time.Second)
+
+		peersC := serverC.GetPeerList()
+
+		gomega.Expect(peersA).To(gomega.ConsistOf(peersC))
+		gomega.Expect(peersB).To(gomega.ConsistOf(peersC))
+
+	}) */
 })
