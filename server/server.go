@@ -29,7 +29,7 @@ type server struct {
 	kvMap        map[string]string
 	httpServer   *http.Server
 	grpcServer   *grpc.Server
-	grpcListener *net.Listener
+	grpcListener net.Listener
 }
 
 type IServer interface {
@@ -50,7 +50,8 @@ func (s *server) Start() {
 	config.Init(s.Host, s.GrpcPort, s.HttpPort)
 
 	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true})
-	go cluster.ClusterService.ClusterInfoGossip()
+	// go cluster.ClusterService.ClusterInfoGossip()
+	cluster.ClusterService.Start()
 
 	go s.startGrpcServer(&s.Host, &s.GrpcPort)
 
@@ -66,6 +67,9 @@ func (s *server) Start() {
 func (s *server) Stop() {
 
 	// close(cluster.StopGossip)
+	Log.Info().Msg("shutting down cluster")
+	// cluster.ClusterService.Stop()
+	// time.Sleep(5 * time.Second)
 	s.stopGinServer()
 	s.stopGrpcServer()
 
@@ -109,7 +113,8 @@ func (s *server) stopGinServer() {
 
 func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 
-	grpcListener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
+	var err error
+	s.grpcListener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", *hostPtr, *portPtr))
 	// lis, err := net.Listen("tcp", fmt.Sprintf("192.168.1.15:%s", *portPtr))
 	if err != nil {
 		Log.Error().AnErr("failed to listen:", err).Send()
@@ -117,8 +122,8 @@ func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 
 	s.grpcServer = grpc.NewServer()
 	pb.RegisterKVSeviceServer(s.grpcServer, &grpcserver.Server{})
-	Log.Info().Any("GRPC server listening at ", grpcListener.Addr().String()).Send()
-	if err := s.grpcServer.Serve(grpcListener); err != nil {
+	Log.Info().Any("GRPC server listening at ", s.grpcListener.Addr().String()).Send()
+	if err := s.grpcServer.Serve(s.grpcListener); err != nil {
 		Log.Error().AnErr("failed to serve: ", err).Send()
 	}
 
@@ -129,6 +134,7 @@ func (s *server) stopGrpcServer() {
 		Log.Info().Msg("Stopping gRPC server...")
 		// s.grpcServer.GracefulStop() // Gracefully stop the server
 		s.grpcServer.Stop()
+		s.grpcListener.Close()
 		Log.Info().Msg("gRPC server stopped.")
 	} else {
 		Log.Warn().Msg("gRPC server is not running.")

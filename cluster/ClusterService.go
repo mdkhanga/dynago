@@ -31,6 +31,23 @@ type IClusterService interface {
 	ClusterInfoGossip()
 	MergePeerLists(received []*pb.Member)
 	MonitorPeers()
+	Stop()
+	Start()
+}
+
+func (c *cluster) Start() {
+
+	go c.ClusterInfoGossip()
+}
+
+func (c *cluster) Stop() {
+
+	close(StopGossip)
+
+	for _, p := range c.clusterMap {
+		p.Stop()
+	}
+
 }
 
 func (c *cluster) AddToCluster(m *Peer) error {

@@ -19,12 +19,15 @@ type Peer struct {
 	Timestamp   int64
 	Status      int  // 0 = Active, 1 = Inactive, 2 = unknown
 	Mine        bool // true means peer is directly connected to me
+	stopChan    chan struct{}
+	once        sync.Once
 }
 
 type IPeer interface {
 	Init()
 	ReceivedMessage(message *pb.ServerMessage)
 	SendMessage(message *pb.ServerMessage)
+	Stop()
 }
 
 func (p *Peer) ReceivedMessage(message *pb.ServerMessage) {
@@ -39,30 +42,44 @@ func (p *Peer) SendMessage(message *pb.ServerMessage) {
 
 }
 
+func (p *Peer) close() {
+	p.once.Do(func() {
+		Log.Info().Msg("P close called")
+		close(p.stopChan)
+	})
+
+}
+
 func (p *Peer) Init() {
 
-	stopChan := make(chan struct{})
+	p.stopChan = make(chan struct{})
 
 	var once sync.Once
 
 	// Function to safely close the stopChan
 	closeStopChan := func() {
 		once.Do(func() {
-			close(stopChan)
+			close(p.stopChan)
+			Log.Info().Msg("old close called")
 		})
 
 		ClusterService.RemoveFromCluster(*p.Host, *p.Port)
 	}
 
-	go p.receiveLoop(stopChan, closeStopChan)
+	go p.receiveLoop(closeStopChan)
 
-	go p.processMessageLoop(stopChan, closeStopChan)
+	go p.processMessageLoop(closeStopChan)
 
-	go p.sendLoop(stopChan, closeStopChan)
+	go p.sendLoop(closeStopChan)
 
-	<-stopChan
+	<-p.stopChan
 	Log.Info().Msg("Stopping message processing due to stream error")
 
+}
+
+func (p *Peer) Stop() {
+
+	p.close()
 }
 
 func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
@@ -74,7 +91,7 @@ func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
 	}
 }
 
-func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
+func (p *Peer) receiveLoop(closeStopChan func()) {
 
 	ctx := p.stream.Context()
 
@@ -84,8 +101,8 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 
 		case <-ctx.Done():
 			Log.Info().Msg("Client disconnected or context canceled (receiver)")
-			// close(stopChan)
-			closeStopChan()
+			// closeStopChan()
+			p.close()
 			return
 
 		default:
@@ -98,7 +115,8 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 				if code == codes.Unavailable || code == codes.Canceled || code == codes.DeadlineExceeded {
 
 					Log.Info().Msg("Unable to read from the stream. server seems unavailable")
-					closeStopChan()
+					// closeStopChan()
+					p.close()
 					return
 				}
 			}
@@ -120,7 +138,7 @@ func (p *Peer) receiveLoop(stopChan chan struct{}, closeStopChan func()) {
 
 }
 
-func (p *Peer) sendLoop(stopChan chan struct{}, closeStopChan func()) {
+func (p *Peer) sendLoop(closeStopChan func()) {
 
 	ctx := p.stream.Context()
 
@@ -128,10 +146,10 @@ func (p *Peer) sendLoop(stopChan chan struct{}, closeStopChan func()) {
 		select {
 		case <-ctx.Done(): // Client disconnected or context canceled
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
-			// close(stopChan)
-			closeStopChan()
+			// closeStopChan()
+			p.close()
 			return
-		case <-stopChan: // Stop signal received
+		case <-p.stopChan: // Stop signal received
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 		default:
@@ -146,7 +164,8 @@ func (p *Peer) sendLoop(stopChan chan struct{}, closeStopChan func()) {
 			if err := p.stream.Send(msg); err != nil {
 				Log.Error().AnErr("Error sending message:", err)
 
-				closeStopChan()
+				// closeStopChan()
+				p.close()
 				return
 			}
 
@@ -154,13 +173,13 @@ func (p *Peer) sendLoop(stopChan chan struct{}, closeStopChan func()) {
 	}
 }
 
-func (p *Peer) processMessageLoop(stopChan chan struct{}, closeStopChan func()) {
+func (p *Peer) processMessageLoop(closeStopChan func()) {
 
 	for {
 
 		select {
 
-		case <-stopChan:
+		case <-p.stopChan:
 			Log.Info().Msg("Stop signal received for processing goroutine")
 			return
 
