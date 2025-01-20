@@ -113,6 +113,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 	cfg := config.GetConfig()
 
+	Log.Info().Msg("Starting Gossip ..........")
 	for {
 
 		select {
@@ -122,7 +123,7 @@ func (c *cluster) ClusterInfoGossip() {
 			return
 		default:
 			// Do your stuff here
-			Log.Info().Msg("Starting Gossip ..........")
+
 			time.Sleep(1 * time.Second) // Simulating work
 
 			var items []string

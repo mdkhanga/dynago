@@ -166,6 +166,11 @@ func (s *server) GetPeerList() []string {
 	peerhostports := make([]string, len(peers))
 
 	for i, p := range peers {
+
+		if p.Status == 1 {
+			continue
+		}
+
 		ph := fmt.Sprintf("%s:%d", *p.Host, *p.Port)
 		peerhostports[i] = ph
 
