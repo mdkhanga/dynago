@@ -140,10 +140,9 @@ func (c *cluster) ClusterInfoGossip() {
 			var items []string
 			members := make([]*pb.Member, len(c.clusterMap))
 
-			// Log.Info().Int("next loop of gossip", len(c.clusterMap)).Send()
-
 			i := 0
 			c.mu.Lock()
+			Log.Info().Int("next loop of gossip", len(c.clusterMap)).Send()
 			for key, pr := range c.clusterMap {
 
 				// Log.Info().Str("key", key).Int64("timestamp", pr.Timestamp).Send()
@@ -157,10 +156,10 @@ func (c *cluster) ClusterInfoGossip() {
 				if now-pr.Timestamp > 10000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
 					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
-					continue
+					// continue
+				} else {
+					items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 				}
-
-				items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
 
@@ -213,6 +212,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 	for _, m := range received {
 
 		key := fmt.Sprintf("%s:%d", m.Hostname, m.Port)
+		// Log.Info().Str("Merging Key", key)
 
 		if existingPeer, exists := c.clusterMap[key]; exists {
 			// Conflict resolution based on timestamp
