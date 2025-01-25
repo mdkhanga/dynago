@@ -68,8 +68,9 @@ func (s *server) Stop() {
 
 	// close(cluster.StopGossip)
 	Log.Info().Msg("shutting down cluster")
-	// cluster.ClusterService.Stop()
-	// time.Sleep(5 * time.Second)
+	client.Close()
+	cluster.ClusterService.Stop()
+	time.Sleep(5 * time.Second)
 	s.stopGinServer()
 	s.stopGrpcServer()
 

@@ -16,11 +16,13 @@ var (
 	ClusterService               = New()
 	Log                          = logger.WithComponent("cluster").Log
 	StopGossip     chan struct{} = make(chan struct{})
+	once           sync.Once
 )
 
 type cluster struct {
 	mu         sync.Mutex
 	clusterMap map[string]*Peer
+	// clusterMap sync.Map
 }
 
 type IClusterService interface {
@@ -40,13 +42,23 @@ func (c *cluster) Start() {
 	go c.ClusterInfoGossip()
 }
 
-func (c *cluster) Stop() {
+func (c *cluster) Close() {
+	once.Do(func() {
+		Log.Info().Msg("c close called")
+		if StopGossip != nil {
+			close(StopGossip)
+		}
+	})
 
-	close(StopGossip)
+}
+
+func (c *cluster) Stop() {
 
 	for _, p := range c.clusterMap {
 		p.Stop()
 	}
+
+	c.Close()
 
 }
 
@@ -56,12 +68,13 @@ func (c *cluster) AddToCluster(m *Peer) error {
 	defer c.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
-	if _, exists := c.clusterMap[key]; exists {
+	/* if _, exists := c.clusterMap[key]; exists {
 		return fmt.Errorf("member %s already exists in the cluster", key)
-	}
+	} */
 
 	m.Status = 0
 
+	// Log.Info().Int32("Adding timestamp for ", *m.Port).Int64("new timestamp", m.Timestamp).Send()
 	c.clusterMap[key] = m
 	return nil
 }
@@ -124,13 +137,16 @@ func (c *cluster) ClusterInfoGossip() {
 		default:
 			// Do your stuff here
 
-			time.Sleep(1 * time.Second) // Simulating work
-
 			var items []string
 			members := make([]*pb.Member, len(c.clusterMap))
 
+			// Log.Info().Int("next loop of gossip", len(c.clusterMap)).Send()
+
 			i := 0
+			c.mu.Lock()
 			for key, pr := range c.clusterMap {
+
+				// Log.Info().Str("key", key).Int64("timestamp", pr.Timestamp).Send()
 
 				now := time.Now().UnixMilli()
 
@@ -148,12 +164,13 @@ func (c *cluster) ClusterInfoGossip() {
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
 
-				Log.Debug().Any("Peer", pr).Send()
-				Log.Debug().Any("Member", members[i]).Send()
+				// Log.Debug().Any("Peer", pr).Send()
+				// Log.Debug().Any("Member", members[i]).Send()
 
 				i++
 
 			}
+			c.mu.Unlock()
 
 			// Log.Debug().Any("Members to send", members).Send()
 
@@ -166,6 +183,7 @@ func (c *cluster) ClusterInfoGossip() {
 				Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
 			}
 
+			c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
@@ -176,10 +194,11 @@ func (c *cluster) ClusterInfoGossip() {
 				pr.OutMessages.Enqueue(&clsServerMsg)
 
 			}
+			c.mu.Unlock()
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
-			time.Sleep(3 * time.Second) // Wait before checking again
+			time.Sleep(1 * time.Second) // Wait before checking again
 			continue
 		}
 
@@ -189,7 +208,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 func (c *cluster) MergePeerLists(received []*pb.Member) {
 
-	Log.Info().Any("Merging peer lists", received).Send()
+	// Log.Info().Any("Merging peer lists", received).Send()
 
 	for _, m := range received {
 
@@ -198,12 +217,15 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 		if existingPeer, exists := c.clusterMap[key]; exists {
 			// Conflict resolution based on timestamp
 			if m.Timestamp > existingPeer.Timestamp {
-				c.clusterMap[key] = &Peer{
+				/* c.clusterMap[key] = &Peer{
 					Host:      &m.Hostname,
 					Port:      &m.Port,
 					Timestamp: m.Timestamp,
 					Status:    int(m.Status),
-				}
+				} */
+				existingPeer.Timestamp = m.Timestamp
+				existingPeer.Status = int(m.Status)
+				// Log.Info().Int32("merging port", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
 			}
 		} else {
 			// New peer

@@ -6,8 +6,6 @@ import (
 
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type Peer struct {
@@ -44,8 +42,10 @@ func (p *Peer) SendMessage(message *pb.ServerMessage) {
 
 func (p *Peer) close() {
 	p.once.Do(func() {
-		Log.Info().Msg("P close called")
-		close(p.stopChan)
+		// Log.Info().Int32("P close called", *p.Port).Send()
+		if p.stopChan != nil {
+			close(p.stopChan)
+		}
 	})
 
 }
@@ -78,7 +78,10 @@ func (p *Peer) Init() {
 }
 
 func (p *Peer) Stop() {
-
+	if p == nil {
+		return
+	}
+	// Log.Info().Int32("port", *p.Port).Bool("me", p.Mine).Send()
 	p.close()
 }
 
@@ -88,6 +91,8 @@ func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
 		stream:      s,
 		InMessages:  utils.MessageQueue{},
 		OutMessages: utils.MessageQueue{},
+		stopChan:    make(chan struct{}),
+		once:        sync.Once{},
 	}
 }
 
@@ -102,7 +107,8 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 		case <-ctx.Done():
 			Log.Info().Msg("Client disconnected or context canceled (receiver)")
 			// closeStopChan()
-			p.close()
+			// p.close()
+			p.Stop()
 			return
 
 		default:
@@ -110,15 +116,16 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 			in, err := p.stream.Recv()
 			if err != nil {
 
-				code := status.Code(err)
+				// code := status.Code(err)
 
-				if code == codes.Unavailable || code == codes.Canceled || code == codes.DeadlineExceeded {
+				// if code == codes.Unavailable || code == codes.Canceled || code == codes.DeadlineExceeded {
 
-					Log.Info().Msg("Unable to read from the stream. server seems unavailable")
-					// closeStopChan()
-					p.close()
-					return
-				}
+				Log.Info().Msg("Unable to read from the stream. server seems unavailable")
+				// closeStopChan()
+				// p.close()
+				p.Stop()
+				return
+				// }
 			}
 
 			// Log.Info().Any("Received message of type:", in.Type).Send()
@@ -147,7 +154,7 @@ func (p *Peer) sendLoop(closeStopChan func()) {
 		case <-ctx.Done(): // Client disconnected or context canceled
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
 			// closeStopChan()
-			p.close()
+			p.Stop()
 			return
 		case <-p.stopChan: // Stop signal received
 			Log.Info().Msg("Stop signal received for sender goroutine")
@@ -165,7 +172,7 @@ func (p *Peer) sendLoop(closeStopChan func()) {
 				Log.Error().AnErr("Error sending message:", err)
 
 				// closeStopChan()
-				p.close()
+				p.Stop()
 				return
 			}
 
@@ -198,10 +205,10 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 				host := msg.GetPing().Hostname
 				port := msg.GetPing().Port
 
-				Log.Info().Int32("hello", msg.GetPing().Hello).
-					Str("Hostname", msg.GetPing().Hostname).
-					Int32("port", msg.GetPing().Port).
-					Msg("Received Ping message from the stream")
+				// Log.Info().Int32("hello", msg.GetPing().Hello).
+				//	Str("Hostname", msg.GetPing().Hostname).
+				//	Int32("port", msg.GetPing().Port).
+				//	Msg("Received Ping message from the stream")
 
 				response = &pb.ServerMessage{
 					Type: pb.MessageType_PING_RESPONSE,
@@ -210,7 +217,9 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 					},
 				}
 
-				if exists, _ := ClusterService.Exists(host, port); !exists {
+				exists, _ := ClusterService.Exists(host, port)
+
+				if !exists {
 
 					p.Host = &host
 					p.Port = &port
@@ -229,8 +238,17 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 
 				} else {
 					// just update the timestamp
+
 					p.Timestamp = time.Now().UnixMilli()
+					if p.Port == nil {
+						p.Host = &host
+						p.Port = &port
+						p.Mine = false
+					}
+					Log.Info().Int32("Updating timestamp for ", *p.Port).Int64("new timestamp", p.Timestamp).Send()
 					p.Status = 0
+					ClusterService.AddToCluster(p)
+
 				}
 
 			case pb.MessageType_KEY_VALUE:

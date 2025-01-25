@@ -15,7 +15,9 @@ import (
 )
 
 var (
-	Log = logger.WithComponent("grpcclient").Log
+	Log      = logger.WithComponent("grpcclient").Log
+	stopChan = make(chan struct{})
+	once     sync.Once
 )
 
 // Queue to hold incoming messages
@@ -41,6 +43,15 @@ func (q *MessageQueue) Dequeue() *pb.ServerMessage {
 	msg := q.messages[0]
 	q.messages = q.messages[1:]
 	return msg
+}
+
+func Close() {
+	once.Do(func() {
+		Log.Info().Msg("client close called")
+		if stopChan != nil {
+			close(stopChan)
+		}
+	})
 }
 
 func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
@@ -77,7 +88,7 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 		sendMessageQueue := &MessageQueue{}
 		receiveMessageQueue := &MessageQueue{}
 
-		stopChan := make(chan struct{})
+		// stopChan := make(chan struct{})
 
 		go sendLoop(stream, sendMessageQueue, stopChan)
 
@@ -113,11 +124,12 @@ func sendLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueue, 
 				continue
 			}
 
-			Log.Debug().Any("Dequed Sending message of type:", msg.Type)
+			// Log.Debug().Any("Dequed Sending message of type:", msg.Type)
 			err := stream.Send(msg)
 			if err != nil {
 				Log.Error().AnErr("Error sending message: ", err)
-				close(stopChan)
+				// close(stopChan)
+				Close()
 				return
 			}
 
@@ -139,19 +151,20 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 			if code == codes.Unavailable || code == codes.Canceled || code == codes.DeadlineExceeded {
 
 				Log.Error().Msg("Unable to read from the stream. server seems unavailable")
-				close(stopChan)
+				// close(stopChan)
+				Close()
 				return
 
 			}
 
 		}
-		Log.Info().Any("Received message of type:", msg.Type).Send()
+		// Log.Info().Any("Received message of type:", msg.Type).Send()
 
 		if msg.Type == pb.MessageType_PING_RESPONSE {
-			Log.Info().Int32("Received Ping message from the stream ", msg.GetPingResponse().Hello)
+			// Log.Info().Int32("Received Ping message from the stream ", msg.GetPingResponse().Hello)
 		} else if msg.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
 
-			Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
+			// Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
 			cluster.ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
 		}
 
