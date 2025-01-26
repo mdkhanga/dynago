@@ -142,7 +142,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 			i := 0
 			c.mu.Lock()
-			Log.Info().Int("next loop of gossip", len(c.clusterMap)).Send()
+
 			for key, pr := range c.clusterMap {
 
 				// Log.Info().Str("key", key).Int64("timestamp", pr.Timestamp).Send()
@@ -162,9 +162,6 @@ func (c *cluster) ClusterInfoGossip() {
 				}
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
-
-				// Log.Debug().Any("Peer", pr).Send()
-				// Log.Debug().Any("Member", members[i]).Send()
 
 				i++
 

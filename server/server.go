@@ -96,6 +96,8 @@ func (s *server) startGinServer(rbind string) {
 
 	}
 
+	Log.Info().Msg("Exiting server")
+
 }
 
 func (s *server) stopGinServer() {
