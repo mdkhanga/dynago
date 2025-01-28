@@ -145,8 +145,6 @@ func (c *cluster) ClusterInfoGossip() {
 
 			for key, pr := range c.clusterMap {
 
-				// Log.Info().Str("key", key).Int64("timestamp", pr.Timestamp).Send()
-
 				now := time.Now().UnixMilli()
 
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
@@ -168,8 +166,6 @@ func (c *cluster) ClusterInfoGossip() {
 			}
 			c.mu.Unlock()
 
-			// Log.Debug().Any("Members to send", members).Send()
-
 			cls := pb.Cluster{Members: members}
 
 			clsReq := pb.ClusterInfoRequest{Cluster: &cls}
@@ -186,7 +182,6 @@ func (c *cluster) ClusterInfoGossip() {
 					continue
 				}
 
-				//Log.Info().Str("Sending cluster info msg to", *pr.Host).Int32("and", *pr.Port).Send()
 				pr.OutMessages.Enqueue(&clsServerMsg)
 
 			}
