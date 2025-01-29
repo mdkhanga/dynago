@@ -252,7 +252,10 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 				}
 
 			case pb.MessageType_KEY_VALUE:
-				Log.Info().Msg("Processing KeyValueMessage")
+				Log.Info().Msg("Received KeyValueMessage")
+				key := msg.GetKeyValue().GetKey()
+				val := msg.GetKeyValue().GetValue()
+				Log.Info().Str("Key=", key).Str("value=", val).Send()
 				// Handle KeyValueMessage
 			default:
 				Log.Info().Msg("Unknown message type received")

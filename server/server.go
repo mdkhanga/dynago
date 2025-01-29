@@ -40,7 +40,7 @@ type IServer interface {
 
 func New(host string, grpcport int32, httpPort int32, seed string) IServer {
 
-	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed}
+	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed, kvMap: make(map[string]string)}
 }
 
 func (s *server) Start() {
@@ -60,6 +60,7 @@ func (s *server) Start() {
 	}
 
 	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
+	Log.Info().Str("Listening http", rbind).Send()
 	s.startGinServer(rbind)
 
 }
@@ -83,6 +84,9 @@ func (s *server) startGinServer(rbind string) {
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
+	router.GET("/kvstore", getInfo)
+	router.GET("/kvstore/:key", s.getValue)
+	router.POST("/kvstore", s.setValue)
 
 	// Initialize the HTTP server
 	s.httpServer = &http.Server{
@@ -159,6 +163,7 @@ func (s *server) setValue(c *gin.Context) {
 	var input m.KeyValue
 	c.BindJSON(&input)
 	s.kvMap[input.Key] = input.Value
+	Log.Info().Str("Settling key =", input.Key).Str("val=", input.Value)
 	c.JSON(http.StatusOK, "Welcome to keystore")
 }
 

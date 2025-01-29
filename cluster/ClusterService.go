@@ -10,6 +10,7 @@ import (
 	"github.com/mdkhanga/dynago/config"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
+	"github.com/mdkhanga/dynago/models"
 )
 
 var (
@@ -194,6 +195,33 @@ func (c *cluster) ClusterInfoGossip() {
 		}
 
 	}
+
+}
+
+func (c *cluster) Replicate(kv models.KeyValue) {
+
+	cfg := config.GetConfig()
+
+	kvmsg := pb.KeyValueMessage{Key: kv.Key, Value: kv.Value}
+	servermsg := pb.ServerMessage{
+		Type:    pb.MessageType_KEY_VALUE,
+		Content: &pb.ServerMessage_KeyValue{KeyValue: &kvmsg},
+	}
+
+	c.mu.Lock()
+
+	for key, pr := range c.clusterMap {
+
+		Log.Info().Str("Replicating to ", key)
+
+		if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+			continue
+		}
+
+		pr.OutMessages.Enqueue(&servermsg)
+
+	}
+	c.mu.Unlock()
 
 }
 
