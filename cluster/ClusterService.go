@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"time"
@@ -34,6 +33,7 @@ type IClusterService interface {
 	ClusterInfoGossip()
 	MergePeerLists(received []*pb.Member)
 	MonitorPeers()
+	Replicate(kv *models.KeyValue)
 	Stop()
 	Start()
 }
@@ -188,8 +188,8 @@ func (c *cluster) ClusterInfoGossip() {
 			}
 			c.mu.Unlock()
 
-			result := strings.Join(items, ", ")
-			Log.Info().Str("Cluster members", result).Send()
+			// result := strings.Join(items, ", ")
+			// Log.Info().Str("Cluster members", result).Send()
 			time.Sleep(1 * time.Second) // Wait before checking again
 			continue
 		}
@@ -198,7 +198,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 }
 
-func (c *cluster) Replicate(kv models.KeyValue) {
+func (c *cluster) Replicate(kv *models.KeyValue) {
 
 	cfg := config.GetConfig()
 
@@ -212,7 +212,7 @@ func (c *cluster) Replicate(kv models.KeyValue) {
 
 	for key, pr := range c.clusterMap {
 
-		Log.Info().Str("Replicating to ", key)
+		Log.Info().Str("Replicating to ", key).Send()
 
 		if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 			continue

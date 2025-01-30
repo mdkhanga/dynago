@@ -166,6 +166,9 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 
 			// Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
 			cluster.ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
+		} else if msg.Type == pb.MessageType_KEY_VALUE {
+			Log.Info().Msg("received a key value msg")
+
 		}
 
 	}

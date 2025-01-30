@@ -130,10 +130,10 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 
 			// Log.Info().Any("Received message of type:", in.Type).Send()
 			if in.Type == pb.MessageType_PING {
-				Log.Info().Int32("hello", in.GetPing().Hello).
-					Str("Hostname", in.GetPing().Hostname).
-					Int32("port", in.GetPing().Port).
-					Msg("Received Ping message from the stream")
+				/* Log.Info().Int32("hello", in.GetPing().Hello).
+				Str("Hostname", in.GetPing().Hostname).
+				Int32("port", in.GetPing().Port).
+				Msg("Received Ping message from the stream") */
 
 				p.InMessages.Enqueue(in)
 				// Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
@@ -205,11 +205,6 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 				host := msg.GetPing().Hostname
 				port := msg.GetPing().Port
 
-				// Log.Info().Int32("hello", msg.GetPing().Hello).
-				//	Str("Hostname", msg.GetPing().Hostname).
-				//	Int32("port", msg.GetPing().Port).
-				//	Msg("Received Ping message from the stream")
-
 				response = &pb.ServerMessage{
 					Type: pb.MessageType_PING_RESPONSE,
 					Content: &pb.ServerMessage_PingResponse{
@@ -245,7 +240,7 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 						p.Port = &port
 						p.Mine = false
 					}
-					Log.Info().Int32("Updating timestamp for ", *p.Port).Int64("new timestamp", p.Timestamp).Send()
+
 					p.Status = 0
 					ClusterService.AddToCluster(p)
 

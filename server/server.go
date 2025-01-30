@@ -164,7 +164,9 @@ func (s *server) setValue(c *gin.Context) {
 	c.BindJSON(&input)
 	s.kvMap[input.Key] = input.Value
 	Log.Info().Str("Settling key =", input.Key).Str("val=", input.Value)
+	cluster.ClusterService.Replicate(&input)
 	c.JSON(http.StatusOK, "Stored the key value")
+
 }
 
 func (s *server) GetPeerList() []string {
