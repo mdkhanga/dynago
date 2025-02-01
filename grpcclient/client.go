@@ -8,6 +8,8 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
+	"github.com/mdkhanga/dynago/models"
+	"github.com/mdkhanga/dynago/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -168,6 +170,7 @@ func receiveLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueu
 			cluster.ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
 		} else if msg.Type == pb.MessageType_KEY_VALUE {
 			Log.Info().Msg("received a key value msg")
+			storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 
 		}
 
