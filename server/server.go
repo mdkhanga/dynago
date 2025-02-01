@@ -10,6 +10,8 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	"github.com/mdkhanga/dynago/config"
 	client "github.com/mdkhanga/dynago/grpcclient"
+	"github.com/mdkhanga/dynago/storage"
+
 	"github.com/mdkhanga/dynago/grpcserver"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
@@ -22,11 +24,11 @@ var (
 )
 
 type server struct {
-	Host         string
-	HttpPort     int32
-	GrpcPort     int32
-	Seed         string
-	kvMap        map[string]string
+	Host     string
+	HttpPort int32
+	GrpcPort int32
+	Seed     string
+	// kvMap        map[string]string
 	httpServer   *http.Server
 	grpcServer   *grpc.Server
 	grpcListener net.Listener
@@ -36,11 +38,12 @@ type IServer interface {
 	Start()
 	Stop()
 	GetPeerList() []string
+	CopyReplica(replica *m.KeyValue)
 }
 
 func New(host string, grpcport int32, httpPort int32, seed string) IServer {
 
-	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed, kvMap: make(map[string]string)}
+	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed}
 }
 
 func (s *server) Start() {
@@ -154,7 +157,7 @@ func getInfo(c *gin.Context) {
 
 func (s *server) getValue(c *gin.Context) {
 	key := c.Param("key")
-	value := s.kvMap[key]
+	value := storage.Store.Get(key).Value
 	jsonString := fmt.Sprintf("{\"%s\":\"%s\"}", key, value)
 	c.JSON(http.StatusOK, jsonString)
 }
@@ -162,11 +165,16 @@ func (s *server) getValue(c *gin.Context) {
 func (s *server) setValue(c *gin.Context) {
 	var input m.KeyValue
 	c.BindJSON(&input)
-	s.kvMap[input.Key] = input.Value
+	// s.kvMap[input.Key] = input.Value
+	storage.Store.Set(&input)
 	Log.Info().Str("Settling key =", input.Key).Str("val=", input.Value)
 	cluster.ClusterService.Replicate(&input)
 	c.JSON(http.StatusOK, "Stored the key value")
 
+}
+
+func (s *server) CopyReplica(replica *m.KeyValue) {
+	storage.Store.Set(replica)
 }
 
 func (s *server) GetPeerList() []string {
