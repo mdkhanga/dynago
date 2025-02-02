@@ -9,9 +9,10 @@ import (
 )
 
 type Peer struct {
-	Host        *string
-	Port        *int32
-	stream      pb.KVSevice_CommunicateServer
+	Host *string
+	Port *int32
+	// stream      pb.KVSevice_CommunicateServer
+	stream      IStream
 	InMessages  utils.MessageQueue
 	OutMessages utils.MessageQueue
 	Timestamp   int64
@@ -85,8 +86,8 @@ func (p *Peer) Stop() {
 	p.close()
 }
 
-func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
-
+// func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
+func NewPeer(s IStream) IPeer {
 	return &Peer{
 		stream:      s,
 		InMessages:  utils.MessageQueue{},
@@ -113,7 +114,8 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 
 		default:
 			// in, err := stream.Recv()
-			in, err := p.stream.Recv()
+			// in, err := p.stream.Recv()
+			in, err := p.stream.Receive()
 			if err != nil {
 
 				// code := status.Code(err)
