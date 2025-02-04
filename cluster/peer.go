@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mdkhanga/dynago/config"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/utils"
 )
@@ -20,6 +21,7 @@ type Peer struct {
 	Mine        bool // true means peer is directly connected to me
 	stopChan    chan struct{}
 	once        sync.Once
+	Clientend   bool // true = clientside of the peer false = server side of the peer
 }
 
 type IPeer interface {
@@ -73,6 +75,16 @@ func (p *Peer) Init() {
 
 	go p.sendLoop(closeStopChan)
 
+	if p.Clientend == true {
+
+		// start the ping loop
+		Log.Info().Msg("Starting the ping loop")
+		p.pingLoop()
+
+	} else {
+		Log.Info().Msg("Not Starting the ping loop")
+	}
+
 	<-p.stopChan
 	Log.Info().Msg("Stopping message processing due to stream error")
 
@@ -87,13 +99,14 @@ func (p *Peer) Stop() {
 }
 
 // func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
-func NewPeer(s IStream) IPeer {
+func NewPeer(s IStream, client bool) IPeer {
 	return &Peer{
 		stream:      s,
 		InMessages:  utils.MessageQueue{},
 		OutMessages: utils.MessageQueue{},
 		stopChan:    make(chan struct{}),
 		once:        sync.Once{},
+		Clientend:   client,
 	}
 }
 
@@ -132,13 +145,17 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 
 			// Log.Info().Any("Received message of type:", in.Type).Send()
 			if in.Type == pb.MessageType_PING {
-				/* Log.Info().Int32("hello", in.GetPing().Hello).
-				Str("Hostname", in.GetPing().Hostname).
-				Int32("port", in.GetPing().Port).
-				Msg("Received Ping message from the stream") */
+				Log.Info().Int32("Received a ping message", in.GetPing().Hello).
+					Str("Hostname", in.GetPing().Hostname).
+					Int32("port", in.GetPing().Port).
+					Msg("Received Ping message from the stream")
 
 				p.InMessages.Enqueue(in)
 				// Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
+			} else if in.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
+
+				// Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
+				ClusterService.MergePeerLists(in.GetClusterInfoRequest().GetCluster().Members)
 			}
 
 		}
@@ -261,6 +278,43 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 			p.OutMessages.Enqueue(response)
 
 		}
+
+	}
+
+}
+
+func (p *Peer) pingLoop() {
+
+	cfg := config.GetConfig()
+	ctx := p.stream.Context()
+
+	for {
+
+		select {
+
+		case <-ctx.Done(): // Client disconnected or context canceled
+			Log.Info().Msg("Client disconnected or context canceled (sender)")
+			// closeStopChan()
+			p.Stop()
+			return
+		case <-p.stopChan: // Stop signal received
+			Log.Info().Msg("Stop signal received for sender goroutine")
+			return
+
+		default:
+
+			msg := &pb.ServerMessage{
+				Type: pb.MessageType_PING,
+				Content: &pb.ServerMessage_Ping{
+					Ping: &pb.PingRequest{Hello: 1, Hostname: cfg.Hostname, Port: cfg.GrpcPort},
+				},
+			}
+
+			p.OutMessages.Enqueue(msg)
+
+		}
+
+		time.Sleep(1 * time.Second)
 
 	}
 

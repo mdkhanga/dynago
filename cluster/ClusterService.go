@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"time"
@@ -188,8 +189,8 @@ func (c *cluster) ClusterInfoGossip() {
 			}
 			c.mu.Unlock()
 
-			// result := strings.Join(items, ", ")
-			// Log.Info().Str("Cluster members", result).Send()
+			result := strings.Join(items, ", ")
+			Log.Info().Str("Cluster members", result).Send()
 			time.Sleep(1 * time.Second) // Wait before checking again
 			continue
 		}

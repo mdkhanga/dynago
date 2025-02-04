@@ -67,7 +67,7 @@ func (s *Server) Communicate(stream pb.KVSevice_CommunicateServer) error {
 	Log.Info().Msg("Server received a request to connect")
 
 	// p := cluster.NewPeer(s)
-	p := cluster.NewPeer(&cluster.ServerStream{Stream: stream})
+	p := cluster.NewPeer(&cluster.ServerStream{Stream: stream}, false)
 
 	p.Init()
 

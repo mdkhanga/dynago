@@ -87,16 +87,19 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 		}
 
-		sendMessageQueue := &MessageQueue{}
+		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, true)
+
+		p.Init()
+
+		/* sendMessageQueue := &MessageQueue{}
 		receiveMessageQueue := &MessageQueue{}
 
-		// stopChan := make(chan struct{})
 
 		go sendLoop(stream, sendMessageQueue, stopChan)
 
 		go receiveLoop(stream, receiveMessageQueue, stopChan)
 
-		go pingLoop(sendMessageQueue, stopChan, myhost, myport)
+		go pingLoop(sendMessageQueue, stopChan, myhost, myport) */
 
 		<-stopChan
 		Log.Info().Msg("Stopping message processing due to stream error")
