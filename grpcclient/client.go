@@ -8,12 +8,8 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
-	"github.com/mdkhanga/dynago/models"
-	"github.com/mdkhanga/dynago/storage"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	status "google.golang.org/grpc/status"
 )
 
 var (
@@ -112,6 +108,7 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 }
 
+/*
 func sendLoop(stream pb.KVSevice_CommunicateClient, messageQueue *MessageQueue, stopChan chan struct{}) {
 
 	for {
@@ -209,3 +206,4 @@ func pingLoop(sendMessageQueue *MessageQueue, stopChan chan struct{}, myhost *st
 	}
 
 }
+*/

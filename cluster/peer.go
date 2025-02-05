@@ -6,6 +6,8 @@ import (
 
 	"github.com/mdkhanga/dynago/config"
 	pb "github.com/mdkhanga/dynago/kvmessages"
+	"github.com/mdkhanga/dynago/models"
+	"github.com/mdkhanga/dynago/storage"
 	"github.com/mdkhanga/dynago/utils"
 )
 
@@ -155,7 +157,10 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 			} else if in.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
 
 				// Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
-				ClusterService.MergePeerLists(in.GetClusterInfoRequest().GetCluster().Members)
+				// ClusterService.MergePeerLists(in.GetClusterInfoRequest().GetCluster().Members)
+				p.InMessages.Enqueue(in)
+			} else {
+				p.InMessages.Enqueue(in)
 			}
 
 		}
@@ -264,13 +269,18 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 					ClusterService.AddToCluster(p)
 
 				}
+			case pb.MessageType_CLUSTER_INFO_REQUEST:
+				ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
 
 			case pb.MessageType_KEY_VALUE:
 				Log.Info().Msg("Received KeyValueMessage")
 				key := msg.GetKeyValue().GetKey()
 				val := msg.GetKeyValue().GetValue()
 				Log.Info().Str("Key=", key).Str("value=", val).Send()
+				storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
+			case pb.MessageType_PING_RESPONSE:
+				// no op for now
 			default:
 				Log.Info().Msg("Unknown message type received")
 			}
