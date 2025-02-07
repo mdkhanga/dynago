@@ -140,10 +140,11 @@ func (c *cluster) ClusterInfoGossip() {
 			// Do your stuff here
 
 			var items []string
-			members := make([]*pb.Member, len(c.clusterMap))
 
 			i := 0
 			c.mu.Lock()
+
+			members := make([]*pb.Member, len(c.clusterMap))
 
 			for key, pr := range c.clusterMap {
 
