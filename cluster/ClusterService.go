@@ -32,7 +32,7 @@ type IClusterService interface {
 	ListCluster() ([]*Peer, error)
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
-	MergePeerLists(received []*pb.Member)
+	MergePeerLists(received []*pb.Member) []*pb.Member
 	MonitorPeers()
 	Replicate(kv *models.KeyValue)
 	Stop()
@@ -227,7 +227,7 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 }
 
-func (c *cluster) MergePeerLists(received []*pb.Member) {
+func (c *cluster) MergePeerLists(received []*pb.Member) []*pb.Member {
 
 	// Log.Info().Any("Merging peer lists", received).Send()
 
@@ -260,6 +260,31 @@ func (c *cluster) MergePeerLists(received []*pb.Member) {
 		}
 
 	}
+
+	// send back updates to the sender
+	var responseMembers []*pb.Member
+
+	// Create a map for quick lookup of received members
+	receivedMap := make(map[string]*pb.Member)
+	for _, member := range received {
+		key := member.Hostname + ":" + string(member.Port)
+		receivedMap[key] = member
+	}
+
+	// Check for additional members or members with a different status and more recent timestamp
+	for key, peer := range c.clusterMap {
+		receivedMember, exists := receivedMap[key]
+		if !exists || peer.Timestamp > receivedMember.Timestamp {
+			responseMembers = append(responseMembers, &pb.Member{
+				Hostname:  *peer.Host,
+				Port:      *peer.Port,
+				Timestamp: peer.Timestamp,
+				Status:    int32(peer.Status),
+			})
+		}
+	}
+
+	return responseMembers
 
 }
 
