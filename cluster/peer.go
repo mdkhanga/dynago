@@ -145,23 +145,7 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 				// }
 			}
 
-			// Log.Info().Any("Received message of type:", in.Type).Send()
-			if in.Type == pb.MessageType_PING {
-				Log.Info().Int32("Received a ping message", in.GetPing().Hello).
-					Str("Hostname", in.GetPing().Hostname).
-					Int32("port", in.GetPing().Port).
-					Msg("Received Ping message from the stream")
-
-				p.InMessages.Enqueue(in)
-				// Log.Info().Int("Server Queue length", p.inMessages.Length()).Send()
-			} else if in.Type == pb.MessageType_CLUSTER_INFO_REQUEST {
-
-				// Log.Info().Any("Recieved cluster member list", msg.GetClusterInfoRequest().GetCluster().Members).Send()
-				// ClusterService.MergePeerLists(in.GetClusterInfoRequest().GetCluster().Members)
-				p.InMessages.Enqueue(in)
-			} else {
-				p.InMessages.Enqueue(in)
-			}
+			p.InMessages.Enqueue(in)
 
 		}
 
@@ -270,7 +254,18 @@ func (p *Peer) processMessageLoop(closeStopChan func()) {
 
 				}
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
+				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
+				cls := pb.Cluster{Members: diff}
+
+				clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
+
+				clsServerMsg := pb.ServerMessage{
+					Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
+					Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
+
+				p.OutMessages.Enqueue(&clsServerMsg)
+			case pb.MessageType_CLUSTER_INFO_RESPONSE:
+				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members)
 
 			case pb.MessageType_KEY_VALUE:
 				Log.Info().Msg("Received KeyValueMessage")
