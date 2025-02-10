@@ -47,7 +47,6 @@ func (p *Peer) SendMessage(message *pb.ServerMessage) {
 
 func (p *Peer) close() {
 	p.once.Do(func() {
-		// Log.Info().Int32("P close called", *p.Port).Send()
 		if p.stopChan != nil {
 			close(p.stopChan)
 		}
@@ -59,23 +58,11 @@ func (p *Peer) Init() {
 
 	p.stopChan = make(chan struct{})
 
-	var once sync.Once
+	go p.receiveLoop()
 
-	// Function to safely close the stopChan
-	closeStopChan := func() {
-		once.Do(func() {
-			close(p.stopChan)
-			Log.Info().Msg("old close called")
-		})
+	go p.processMessageLoop()
 
-		ClusterService.RemoveFromCluster(*p.Host, *p.Port)
-	}
-
-	go p.receiveLoop(closeStopChan)
-
-	go p.processMessageLoop(closeStopChan)
-
-	go p.sendLoop(closeStopChan)
+	go p.sendLoop()
 
 	if p.Clientend == true {
 
@@ -96,7 +83,6 @@ func (p *Peer) Stop() {
 	if p == nil {
 		return
 	}
-	// Log.Info().Int32("port", *p.Port).Bool("me", p.Mine).Send()
 	p.close()
 }
 
@@ -112,7 +98,7 @@ func NewPeer(s IStream, client bool) IPeer {
 	}
 }
 
-func (p *Peer) receiveLoop(closeStopChan func()) {
+func (p *Peer) receiveLoop() {
 
 	ctx := p.stream.Context()
 
@@ -153,7 +139,7 @@ func (p *Peer) receiveLoop(closeStopChan func()) {
 
 }
 
-func (p *Peer) sendLoop(closeStopChan func()) {
+func (p *Peer) sendLoop() {
 
 	ctx := p.stream.Context()
 
@@ -188,7 +174,7 @@ func (p *Peer) sendLoop(closeStopChan func()) {
 	}
 }
 
-func (p *Peer) processMessageLoop(closeStopChan func()) {
+func (p *Peer) processMessageLoop() {
 
 	for {
 
