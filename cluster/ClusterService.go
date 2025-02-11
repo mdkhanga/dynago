@@ -32,7 +32,7 @@ type IClusterService interface {
 	ListCluster() ([]*Peer, error)
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
-	MergePeerLists(received []*pb.Member) []*pb.Member
+	MergePeerLists(received []*pb.Member, response bool) []*pb.Member
 	MonitorPeers()
 	Replicate(kv *models.KeyValue)
 	Stop()
@@ -227,9 +227,10 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 }
 
-func (c *cluster) MergePeerLists(received []*pb.Member) []*pb.Member {
+func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Member {
 
-	// Log.Info().Any("Merging peer lists", received).Send()
+	Log.Info().Any("Merging peer lists", received).Send()
+	cfg := config.GetConfig()
 
 	for _, m := range received {
 
@@ -264,24 +265,32 @@ func (c *cluster) MergePeerLists(received []*pb.Member) []*pb.Member {
 	// send back updates to the sender
 	var responseMembers []*pb.Member
 
-	// Create a map for quick lookup of received members
-	receivedMap := make(map[string]*pb.Member)
-	for _, member := range received {
-		key := member.Hostname + ":" + string(member.Port)
-		receivedMap[key] = member
-	}
+	if response {
+		// Create a map for quick lookup of received members
+		receivedMap := make(map[string]*pb.Member)
+		for _, member := range received {
+			key := fmt.Sprintf("%s:%d", member.Hostname, member.Port)
+			receivedMap[key] = member
+		}
 
-	// Check for additional members or members with a different status and more recent timestamp
-	for key, peer := range c.clusterMap {
-		receivedMember, exists := receivedMap[key]
-		if !exists || peer.Timestamp > receivedMember.Timestamp {
-			Log.Info().Int32("Found an extra host on out side", *peer.Port).Send()
-			responseMembers = append(responseMembers, &pb.Member{
-				Hostname:  *peer.Host,
-				Port:      *peer.Port,
-				Timestamp: peer.Timestamp,
-				Status:    int32(peer.Status),
-			})
+		// Check for additional members or members with a different status and more recent timestamp
+		for key, peer := range c.clusterMap {
+			receivedMember, exists := receivedMap[key]
+
+			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
+				Log.Info().Msg("Skipping")
+				continue
+			}
+
+			if !exists || peer.Timestamp > receivedMember.Timestamp {
+				Log.Info().Int32("Found an extra host on our side", *peer.Port).Send()
+				responseMembers = append(responseMembers, &pb.Member{
+					Hostname:  *peer.Host,
+					Port:      *peer.Port,
+					Timestamp: peer.Timestamp,
+					Status:    int32(peer.Status),
+				})
+			}
 		}
 	}
 

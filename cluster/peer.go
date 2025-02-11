@@ -240,18 +240,21 @@ func (p *Peer) processMessageLoop() {
 
 				}
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members)
-				cls := pb.Cluster{Members: diff}
+				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members, true)
 
-				clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
+				if len(diff) > 0 {
+					cls := pb.Cluster{Members: diff}
 
-				clsServerMsg := pb.ServerMessage{
-					Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
-					Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
+					clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
 
-				p.OutMessages.Enqueue(&clsServerMsg)
+					clsServerMsg := pb.ServerMessage{
+						Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
+						Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
+
+					p.OutMessages.Enqueue(&clsServerMsg)
+				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
-				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members)
+				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members, false)
 
 			case pb.MessageType_KEY_VALUE:
 				Log.Info().Msg("Received KeyValueMessage")
