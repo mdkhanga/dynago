@@ -248,7 +248,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 				} */
 				existingPeer.Timestamp = m.Timestamp
 				existingPeer.Status = int(m.Status)
-				// Log.Info().Int32("merging port", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
+
 			}
 		} else {
 			// New peer
@@ -276,6 +276,8 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		// Check for additional members or members with a different status and more recent timestamp
 		for key, peer := range c.clusterMap {
 			receivedMember, exists := receivedMap[key]
+
+			Log.Info().Str("key", key).Bool("exists", exists).Send()
 
 			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
 				Log.Info().Msg("Skipping")
