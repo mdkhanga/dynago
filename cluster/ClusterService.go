@@ -235,7 +235,6 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 	for _, m := range received {
 
 		key := fmt.Sprintf("%s:%d", m.Hostname, m.Port)
-		// Log.Info().Str("Merging Key", key)
 
 		if existingPeer, exists := c.clusterMap[key]; exists {
 			// Conflict resolution based on timestamp
