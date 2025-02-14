@@ -159,7 +159,7 @@ func (c *cluster) ClusterInfoGossip() {
 					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
 					// continue
 				} else {
-					items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
+					items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, *&pr.Timestamp))
 				}
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
@@ -232,24 +232,29 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 	Log.Info().Any("Merging peer lists", received).Send()
 	cfg := config.GetConfig()
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for _, m := range received {
 
 		key := fmt.Sprintf("%s:%d", m.Hostname, m.Port)
 
 		if existingPeer, exists := c.clusterMap[key]; exists {
+
+			// Log.Info().Int32("existing peer", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
+			// Log.Info().Int32("received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
+
 			// Conflict resolution based on timestamp
 			if m.Timestamp > existingPeer.Timestamp {
-				/* c.clusterMap[key] = &Peer{
-					Host:      &m.Hostname,
-					Port:      &m.Port,
-					Timestamp: m.Timestamp,
-					Status:    int(m.Status),
-				} */
+
 				existingPeer.Timestamp = m.Timestamp
 				existingPeer.Status = int(m.Status)
 
 			}
 		} else {
+
+			// Log.Info().Int32("received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
+
 			// New peer
 			c.clusterMap[key] = &Peer{
 				Host:      &m.Hostname,
@@ -257,6 +262,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 				Timestamp: m.Timestamp,
 				Status:    int(m.Status),
 			}
+
 		}
 
 	}
@@ -276,7 +282,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		for key, peer := range c.clusterMap {
 			receivedMember, exists := receivedMap[key]
 
-			Log.Info().Str("key", key).Bool("exists", exists).Send()
+			// Log.Info().Str("key", key).Bool("exists", exists).Send()
 
 			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
 				Log.Info().Msg("Skipping")
