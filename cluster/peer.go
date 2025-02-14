@@ -242,7 +242,11 @@ func (p *Peer) processMessageLoop() {
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members, true)
 
+				// Log.Info().Int("We need to send back diff ", len(diff)).Send()
+
 				if len(diff) > 0 {
+
+					Log.Info().Any("Sending back diff ", diff).Send()
 					cls := pb.Cluster{Members: diff}
 
 					clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
@@ -252,8 +256,11 @@ func (p *Peer) processMessageLoop() {
 						Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
 
 					p.OutMessages.Enqueue(&clsServerMsg)
+				} else {
+					Log.Info().Msg("Nothing to send back")
 				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
+
 				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members, false)
 
 			case pb.MessageType_KEY_VALUE:
