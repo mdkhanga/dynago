@@ -150,6 +150,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 				now := time.Now().UnixMilli()
 
+				pr.mu.Lock()
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
@@ -166,6 +167,8 @@ func (c *cluster) ClusterInfoGossip() {
 
 				i++
 
+				pr.mu.Unlock()
+
 			}
 			c.mu.Unlock()
 
@@ -178,17 +181,18 @@ func (c *cluster) ClusterInfoGossip() {
 				Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
 			}
 
-			c.mu.Lock()
+			// c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					continue
 				}
 
+				Log.Info().Msg("Sending ClusterInfo Msg")
 				pr.OutMessages.Enqueue(&clsServerMsg)
 
 			}
-			c.mu.Unlock()
+			// c.mu.Unlock()
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
@@ -229,11 +233,22 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Member {
 
-	Log.Info().Any("Merging peer lists", received).Send()
+	Log.Info().Any("Merging peer lists received", received).Bool("resp", response).Send()
+	defer Log.Info().Msg("Exiting MergePeerList")
 	cfg := config.GetConfig()
 
+	Log.Info().Msg("Waiting to acc cluster lock")
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if response == false {
+		var items []string
+		for _, pr := range c.clusterMap {
+			items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, *&pr.Timestamp))
+		}
+		result := strings.Join(items, ", ")
+		Log.Info().Str("Cluster members", result).Send()
+	}
 
 	for _, m := range received {
 
@@ -242,13 +257,16 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		if existingPeer, exists := c.clusterMap[key]; exists {
 
 			// Log.Info().Int32("existing peer", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
-			// Log.Info().Int32("received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
 
 			// Conflict resolution based on timestamp
 			if m.Timestamp > existingPeer.Timestamp {
 
+				Log.Info().Int32("updating based on received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
+
+				existingPeer.mu.Lock()
 				existingPeer.Timestamp = m.Timestamp
 				existingPeer.Status = int(m.Status)
+				existingPeer.mu.Unlock()
 
 			}
 		} else {
@@ -285,7 +303,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 			// Log.Info().Str("key", key).Bool("exists", exists).Send()
 
 			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
-				Log.Info().Msg("Skipping")
+				// Log.Info().Msg("Skipping")
 				continue
 			}
 
