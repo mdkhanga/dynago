@@ -24,6 +24,11 @@ type Peer struct {
 	stopChan    chan struct{}
 	once        sync.Once
 	Clientend   bool // true = clientside of the peer false = server side of the peer
+	mu          sync.Mutex
+
+	// rewrite in thread safe way
+	InMessagesChan  chan *pb.ServerMessage // Buffered channel for inbound messages
+	OutMessagesChan chan *pb.ServerMessage
 }
 
 type IPeer interface {
@@ -242,7 +247,7 @@ func (p *Peer) processMessageLoop() {
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members, true)
 
-				// Log.Info().Int("We need to send back diff ", len(diff)).Send()
+				Log.Info().Msg("Received cluster info")
 
 				if len(diff) > 0 {
 
@@ -260,7 +265,7 @@ func (p *Peer) processMessageLoop() {
 					Log.Info().Msg("Nothing to send back")
 				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
-
+				Log.Info().Msg("Received cluster info response")
 				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members, false)
 
 			case pb.MessageType_KEY_VALUE:
