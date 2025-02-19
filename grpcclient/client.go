@@ -17,22 +17,6 @@ var (
 	// once     sync.Once
 )
 
-/*
-// Queue to hold incoming messages
-
-	type MessageQueue struct {
-		messages []*pb.ServerMessage
-		mu       sync.Mutex
-	}
-
-// Enqueue adds a message to the queue
-
-	func (q *MessageQueue) Enqueue(msg *pb.ServerMessage) {
-		q.mu.Lock()
-		defer q.mu.Unlock()
-		q.messages = append(q.messages, msg)
-	}
-*/
 func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 	for {
