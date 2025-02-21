@@ -15,7 +15,6 @@ var (
 	once   sync.Once
 )
 
-// Initialize the configuration (singleton)
 func Init(hostname string, grpcport int32, httpport int32) {
 	once.Do(func() {
 		config = &Config{
@@ -26,7 +25,6 @@ func Init(hostname string, grpcport int32, httpport int32) {
 	})
 }
 
-// GetConfig returns the global configuration instance
 func GetConfig() *Config {
 	if config == nil {
 		panic("config not initialized")
