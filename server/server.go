@@ -70,9 +70,7 @@ func (s *server) Start() {
 
 func (s *server) Stop() {
 
-	// close(cluster.StopGossip)
 	Log.Info().Msg("shutting down cluster")
-	// client.Close()
 	cluster.ClusterService.Stop()
 	time.Sleep(5 * time.Second)
 	s.stopGinServer()
