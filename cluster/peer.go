@@ -63,17 +63,21 @@ func (p *Peer) Init() {
 
 	p.stopChan = make(chan struct{})
 
-	go p.receiveLoop()
+	// go p.receiveLoop()
+	go p.receiveLoopWithChannel()
 
-	go p.processMessageLoop()
+	// go p.processMessageLoop()
+	go p.processMessageLoopWithChannel()
 
-	go p.sendLoop()
+	// go p.sendLoop()
+	go p.sendLoopWithChannel()
 
 	if p.Clientend == true {
 
 		// start the ping loop
 		Log.Info().Msg("Starting the ping loop")
-		p.pingLoop()
+		// p.pingLoop()
+		go p.pingLoopWithChannel()
 
 	} else {
 		Log.Info().Msg("Not Starting the ping loop")
@@ -100,6 +104,9 @@ func NewPeer(s IStream, client bool) IPeer {
 		stopChan:    make(chan struct{}),
 		once:        sync.Once{},
 		Clientend:   client,
+
+		InMessagesChan:  make(chan *pb.ServerMessage, 100),
+		OutMessagesChan: make(chan *pb.ServerMessage, 100),
 	}
 }
 
@@ -148,6 +155,8 @@ func (p *Peer) receiveLoopWithChannel() {
 
 	ctx := p.stream.Context()
 
+	count := 0
+
 	for {
 
 		select {
@@ -176,6 +185,9 @@ func (p *Peer) receiveLoopWithChannel() {
 				return
 				// }
 			}
+
+			count++
+			// Log.Info().Int("received  msg", count).Send()
 
 			p.InMessagesChan <- in
 
@@ -220,11 +232,16 @@ func (p *Peer) sendLoop() {
 	}
 }
 
-func (p *Peer) sendLoopWithChan() {
+func (p *Peer) sendLoopWithChannel() {
 
 	ctx := p.stream.Context()
 
+	count := 00
+
 	for {
+
+		// Log.Info().Msg("In sendLoopWithChannel")
+
 		select {
 		case <-ctx.Done(): // Client disconnected or context canceled
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
@@ -234,23 +251,16 @@ func (p *Peer) sendLoopWithChan() {
 		case <-p.stopChan: // Stop signal received
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
-		default:
-			// Send a message to the client (dummy example message)
+		case msg, _ := <-p.OutMessagesChan: // Properly read from channel
 
-			msg := <-p.OutMessagesChan
-			if msg == nil {
-				time.Sleep(1 * time.Second) // Wait before checking again
-				continue
-			}
+			count++
+			// Log.Info().Int("sending msg", count).Send()
 
 			if err := p.stream.Send(msg); err != nil {
 				Log.Error().AnErr("Error sending message:", err)
-
-				// closeStopChan()
 				p.Stop()
 				return
 			}
-
 		}
 	}
 }
@@ -277,8 +287,8 @@ func (p *Peer) processMessageLoop() {
 			switch msg.Type {
 			case pb.MessageType_PING:
 
-				host := msg.GetPing().Hostname
-				port := msg.GetPing().Port
+				host := msg.GetPing().GetHostname()
+				port := msg.GetPing().GetPort()
 
 				response = &pb.ServerMessage{
 					Type: pb.MessageType_PING_RESPONSE,
@@ -296,10 +306,10 @@ func (p *Peer) processMessageLoop() {
 					p.Timestamp = time.Now().UnixMilli()
 					p.Mine = false
 
-					Log.Info().
-						Str("Hostname", msg.GetPing().Hostname).
-						Int32("port", msg.GetPing().Port).
-						Msg("Adding to cluster")
+					// Log.Info().
+					//	Str("Hostname", msg.GetPing().Hostname).
+					//	Int32("port", msg.GetPing().Port).
+					//	Msg("Adding to cluster")
 
 					ClusterService.AddToCluster(p)
 					Log.Info().Str("Hostname", host).
@@ -365,7 +375,9 @@ func (p *Peer) processMessageLoop() {
 
 }
 
-func (p *Peer) processMessageLoopChan() {
+func (p *Peer) processMessageLoopWithChannel() {
+
+	count := 0
 
 	for {
 
@@ -375,22 +387,25 @@ func (p *Peer) processMessageLoopChan() {
 			Log.Info().Msg("Stop signal received for processing goroutine")
 			return
 
-		default:
+		case msg := <-p.InMessagesChan:
 
-			msg := <-p.InMessagesChan
+			// msg := <-p.InMessagesChan
 			if msg == nil {
 				time.Sleep(1 * time.Second) // Wait before checking again
 				continue
 			}
 
-			var response *pb.ServerMessage
+			// var response *pb.ServerMessage
 			switch msg.Type {
 			case pb.MessageType_PING:
 
-				host := msg.GetPing().Hostname
-				port := msg.GetPing().Port
+				count++
+				// Log.Info().Int("received ping msg", count).Send()
 
-				response = &pb.ServerMessage{
+				host := msg.GetPing().GetHostname()
+				port := msg.GetPing().GetPort()
+
+				response := &pb.ServerMessage{
 					Type: pb.MessageType_PING_RESPONSE,
 					Content: &pb.ServerMessage_PingResponse{
 						PingResponse: &pb.PingResponse{Hello: 2},
@@ -406,10 +421,10 @@ func (p *Peer) processMessageLoopChan() {
 					p.Timestamp = time.Now().UnixMilli()
 					p.Mine = false
 
-					Log.Info().
-						Str("Hostname", msg.GetPing().Hostname).
-						Int32("port", msg.GetPing().Port).
-						Msg("Adding to cluster")
+					/* Log.Info().
+					Str("Hostname", msg.GetPing().GetHostname()).
+					Int32("port", msg.GetPing().GetPort()).
+					Msg("Adding to cluster") */
 
 					ClusterService.AddToCluster(p)
 					Log.Info().Str("Hostname", host).
@@ -430,14 +445,18 @@ func (p *Peer) processMessageLoopChan() {
 					ClusterService.AddToCluster(p)
 
 				}
-			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members, true)
 
-				Log.Info().Msg("Received cluster info")
+				p.OutMessagesChan <- response
+
+			case pb.MessageType_CLUSTER_INFO_REQUEST:
+				// Log.Info().Msg("received cluster info msg")
+				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
+
+				// Log.Info().Msg("Received cluster info")
 
 				if len(diff) > 0 {
 
-					Log.Info().Any("Sending back diff ", diff).Send()
+					// Log.Info().Any("Sending back diff ", diff).Send()
 					cls := pb.Cluster{Members: diff}
 
 					clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
@@ -446,13 +465,14 @@ func (p *Peer) processMessageLoopChan() {
 						Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
 						Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
 
-					p.OutMessages.Enqueue(&clsServerMsg)
+					// p.OutMessages.Enqueue(&clsServerMsg)
+					p.OutMessagesChan <- &clsServerMsg
 				} else {
-					Log.Info().Msg("Nothing to send back")
+					// Log.Info().Msg("Nothing to send back")
 				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
 				Log.Info().Msg("Received cluster info response")
-				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().Members, false)
+				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().GetMembers(), false)
 
 			case pb.MessageType_KEY_VALUE:
 				Log.Info().Msg("Received KeyValueMessage")
@@ -462,12 +482,13 @@ func (p *Peer) processMessageLoopChan() {
 				storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
 			case pb.MessageType_PING_RESPONSE:
+				// Log.Info().Msg("received ping response msg")
 				// no op for now
 			default:
 				Log.Info().Msg("Unknown message type received")
 			}
 
-			p.OutMessagesChan <- response
+			// p.OutMessagesChan <- response
 
 		}
 
@@ -512,12 +533,16 @@ func (p *Peer) pingLoop() {
 
 }
 
-func (p *Peer) pingLoopChan() {
+func (p *Peer) pingLoopWithChannel() {
 
 	cfg := config.GetConfig()
 	ctx := p.stream.Context()
 
+	count := 0
+
 	for {
+
+		// Log.Info().Msg("In Ping Loop")
 
 		select {
 
@@ -530,8 +555,7 @@ func (p *Peer) pingLoopChan() {
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 
-		default:
-
+		case <-time.After(1 * time.Second): // Send PING at regular intervals
 			msg := &pb.ServerMessage{
 				Type: pb.MessageType_PING,
 				Content: &pb.ServerMessage_Ping{
@@ -539,11 +563,10 @@ func (p *Peer) pingLoopChan() {
 				},
 			}
 
+			count++
+			Log.Info().Int("Sending ping msg", count).Send()
 			p.OutMessagesChan <- msg
-
 		}
-
-		time.Sleep(1 * time.Second)
 
 	}
 

@@ -66,8 +66,8 @@ func (c *cluster) Stop() {
 
 func (c *cluster) AddToCluster(m *Peer) error {
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	// c.mu.Lock()
+	// defer c.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
 	/* if _, exists := c.clusterMap[key]; exists {
@@ -78,6 +78,7 @@ func (c *cluster) AddToCluster(m *Peer) error {
 
 	// Log.Info().Int32("Adding timestamp for ", *m.Port).Int64("new timestamp", m.Timestamp).Send()
 	c.clusterMap[key] = m
+	// Log.Info().Str("Added key to cluster", key).Send()
 	return nil
 }
 
@@ -109,6 +110,10 @@ func (c *cluster) ListCluster() ([]*Peer, error) {
 }
 
 func (c *cluster) Exists(hostname string, port int32) (bool, error) {
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	key := fmt.Sprintf("%s:%d", hostname, port)
 	if _, exists := c.clusterMap[key]; !exists {
 		return false, nil
@@ -131,6 +136,7 @@ func (c *cluster) ClusterInfoGossip() {
 	Log.Info().Msg("Starting Gossip ..........")
 	for {
 
+		Log.Info().Msg("In Gossip loop..........")
 		select {
 		case <-StopGossip:
 			// Signal received to stop the loop
@@ -142,7 +148,9 @@ func (c *cluster) ClusterInfoGossip() {
 			var items []string
 
 			i := 0
-			c.mu.Lock()
+
+			Log.Info().Msg("Waiting for lock 1")
+			// c.mu.Lock()
 
 			members := make([]*pb.Member, len(c.clusterMap))
 
@@ -150,7 +158,9 @@ func (c *cluster) ClusterInfoGossip() {
 
 				now := time.Now().UnixMilli()
 
-				pr.mu.Lock()
+				Log.Info().Msg("Iterating over map")
+
+				// pr.mu.Lock()
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
@@ -160,17 +170,17 @@ func (c *cluster) ClusterInfoGossip() {
 					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
 					// continue
 				} else {
-					items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, *&pr.Timestamp))
+					items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, pr.Timestamp))
 				}
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}
 
 				i++
 
-				pr.mu.Unlock()
+				// pr.mu.Unlock()
 
 			}
-			c.mu.Unlock()
+			// c.mu.Unlock()
 
 			cls := pb.Cluster{Members: members}
 
@@ -184,15 +194,20 @@ func (c *cluster) ClusterInfoGossip() {
 			// c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
+				Log.Info().Msg("Iterating over map 2nd time")
+
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					continue
 				}
 
-				Log.Info().Msg("Sending ClusterInfo Msg")
-				pr.OutMessages.Enqueue(&clsServerMsg)
+				// Log.Info().Msg("Sending ClusterInfo Msg")
+				// pr.OutMessages.Enqueue(&clsServerMsg)
+
+				pr.OutMessagesChan <- &clsServerMsg
 
 			}
 			// c.mu.Unlock()
+			Log.Info().Msg(" Done Iterating over map 2nd time")
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
@@ -233,11 +248,10 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Member {
 
-	Log.Info().Any("Merging peer lists received", received).Bool("resp", response).Send()
-	defer Log.Info().Msg("Exiting MergePeerList")
+	// Log.Info().Any("Merging peer lists received", received).Bool("resp", response).Send()
+
 	cfg := config.GetConfig()
 
-	Log.Info().Msg("Waiting to acc cluster lock")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -261,7 +275,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 			// Conflict resolution based on timestamp
 			if m.Timestamp > existingPeer.Timestamp {
 
-				Log.Info().Int32("updating based on received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
+				// Log.Info().Str("updating based on received peer", m.Hostname).Int32("port", m.Port).Int64("timestamp", m.Timestamp).Send()
 
 				existingPeer.mu.Lock()
 				existingPeer.Timestamp = m.Timestamp
@@ -300,7 +314,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		for key, peer := range c.clusterMap {
 			receivedMember, exists := receivedMap[key]
 
-			// Log.Info().Str("key", key).Bool("exists", exists).Send()
+			// Log.Info().Str("checking key", key).Bool("exists", exists).Send()
 
 			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
 				// Log.Info().Msg("Skipping")
