@@ -142,7 +142,7 @@ func (c *cluster) ClusterInfoGossip() {
 			// Signal received to stop the loop
 			Log.Info().Msg("Stopping clusterInfoGossip.")
 			return
-		default:
+		case <-time.After(1 * time.Second):
 			// Do your stuff here
 
 			var items []string
@@ -200,10 +200,17 @@ func (c *cluster) ClusterInfoGossip() {
 					continue
 				}
 
-				// Log.Info().Msg("Sending ClusterInfo Msg")
+				if pr.Clientend != true {
+					continue
+				}
+
+				Log.Info().Int32("Sending ClusterInfo Msg to", *pr.Port).Send()
+				Log.Info().Int("Channel length", len(pr.OutMessagesChan)).Send()
 				// pr.OutMessages.Enqueue(&clsServerMsg)
 
 				pr.OutMessagesChan <- &clsServerMsg
+
+				Log.Info().Msg("Sent ClusterInfo Msg")
 
 			}
 			// c.mu.Unlock()
@@ -211,8 +218,8 @@ func (c *cluster) ClusterInfoGossip() {
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
-			time.Sleep(1 * time.Second) // Wait before checking again
-			continue
+			//  time.Sleep(1 * time.Second) // Wait before checking again
+
 		}
 
 	}
