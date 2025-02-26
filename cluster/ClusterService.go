@@ -149,7 +149,6 @@ func (c *cluster) ClusterInfoGossip() {
 
 			i := 0
 
-			Log.Info().Msg("Waiting for lock 1")
 			// c.mu.Lock()
 
 			members := make([]*pb.Member, len(c.clusterMap))
@@ -157,8 +156,6 @@ func (c *cluster) ClusterInfoGossip() {
 			for key, pr := range c.clusterMap {
 
 				now := time.Now().UnixMilli()
-
-				Log.Info().Msg("Iterating over map")
 
 				// pr.mu.Lock()
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
