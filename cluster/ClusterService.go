@@ -191,8 +191,6 @@ func (c *cluster) ClusterInfoGossip() {
 			// c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
-				Log.Info().Msg("Iterating over map 2nd time")
-
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					continue
 				}
@@ -201,17 +199,12 @@ func (c *cluster) ClusterInfoGossip() {
 					continue
 				}
 
-				Log.Info().Int32("Sending ClusterInfo Msg to", *pr.Port).Send()
-				Log.Info().Int("Channel length", len(pr.OutMessagesChan)).Send()
-				// pr.OutMessages.Enqueue(&clsServerMsg)
-
 				pr.OutMessagesChan <- &clsServerMsg
 
 				Log.Info().Msg("Sent ClusterInfo Msg")
 
 			}
 			// c.mu.Unlock()
-			Log.Info().Msg(" Done Iterating over map 2nd time")
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
