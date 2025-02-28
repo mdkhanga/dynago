@@ -72,7 +72,7 @@ func (p *Peer) Init() {
 	// go p.sendLoop()
 	go p.sendLoopWithChannel()
 
-	if p.Clientend == true {
+	if p.Clientend != true {
 
 		// start the ping loop
 		Log.Info().Msg("Starting the ping loop")
@@ -110,7 +110,7 @@ func NewPeer(s IStream, client bool) IPeer {
 	}
 }
 
-func (p *Peer) receiveLoop() {
+/* func (p *Peer) receiveLoop() {
 
 	ctx := p.stream.Context()
 
@@ -149,7 +149,7 @@ func (p *Peer) receiveLoop() {
 
 	}
 
-}
+} */
 
 func (p *Peer) receiveLoopWithChannel() {
 
@@ -166,6 +166,9 @@ func (p *Peer) receiveLoopWithChannel() {
 			// closeStopChan()
 			// p.close()
 			p.Stop()
+			return
+		case <-p.stopChan: // Stop signal received
+			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 
 		default:
@@ -197,7 +200,7 @@ func (p *Peer) receiveLoopWithChannel() {
 
 }
 
-func (p *Peer) sendLoop() {
+/* func (p *Peer) sendLoop() {
 
 	ctx := p.stream.Context()
 
@@ -230,7 +233,7 @@ func (p *Peer) sendLoop() {
 
 		}
 	}
-}
+} */
 
 func (p *Peer) sendLoopWithChannel() {
 
@@ -265,7 +268,7 @@ func (p *Peer) sendLoopWithChannel() {
 	}
 }
 
-func (p *Peer) processMessageLoop() {
+/* func (p *Peer) processMessageLoop() {
 
 	for {
 
@@ -331,13 +334,14 @@ func (p *Peer) processMessageLoop() {
 
 				}
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
+				Log.Info().Msg("Received a cluster info msg")
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().Members, true)
 
 				Log.Info().Msg("Received cluster info")
 
 				if len(diff) > 0 {
 
-					Log.Info().Any("Sending back diff ", diff).Send()
+					// Log.Info().Any("Sending back diff ", diff).Send()
 					cls := pb.Cluster{Members: diff}
 
 					clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
@@ -373,7 +377,7 @@ func (p *Peer) processMessageLoop() {
 
 	}
 
-}
+} */
 
 func (p *Peer) processMessageLoopWithChannel() {
 
@@ -449,7 +453,7 @@ func (p *Peer) processMessageLoopWithChannel() {
 				p.OutMessagesChan <- response
 
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				// Log.Info().Msg("received cluster info msg")
+				Log.Info().Msg("received cluster info msg")
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
 
 				// Log.Info().Msg("Received cluster info")
@@ -471,7 +475,7 @@ func (p *Peer) processMessageLoopWithChannel() {
 					// Log.Info().Msg("Nothing to send back")
 				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
-				Log.Info().Msg("Received cluster info response")
+				// Log.Info().Msg("Received cluster info response")
 				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().GetMembers(), false)
 
 			case pb.MessageType_KEY_VALUE:
@@ -564,7 +568,7 @@ func (p *Peer) pingLoopWithChannel() {
 			}
 
 			count++
-			Log.Info().Int("Sending ping msg", count).Send()
+			// Log.Info().Int("Sending ping msg", count).Send()
 			p.OutMessagesChan <- msg
 		}
 

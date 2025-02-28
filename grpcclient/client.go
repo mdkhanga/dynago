@@ -48,7 +48,7 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 		}
 
-		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, true)
+		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, false)
 
 		p.Init()
 

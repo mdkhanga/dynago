@@ -133,10 +133,8 @@ func (c *cluster) ClusterInfoGossip() {
 
 	cfg := config.GetConfig()
 
-	Log.Info().Msg("Starting Gossip ..........")
 	for {
 
-		Log.Info().Msg("In Gossip loop..........")
 		select {
 		case <-StopGossip:
 			// Signal received to stop the loop
@@ -165,6 +163,7 @@ func (c *cluster) ClusterInfoGossip() {
 				if now-pr.Timestamp > 60000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
 					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
+					pr.Stop()
 					// continue
 				} else {
 					items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, pr.Timestamp))
@@ -199,9 +198,13 @@ func (c *cluster) ClusterInfoGossip() {
 					continue
 				}
 
+				if pr.Status == 1 {
+					continue
+				}
+
 				pr.OutMessagesChan <- &clsServerMsg
 
-				Log.Info().Msg("Sent ClusterInfo Msg")
+				// Log.Info().Msg("Sent ClusterInfo Msg")
 
 			}
 			// c.mu.Unlock()
