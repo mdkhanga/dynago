@@ -453,7 +453,7 @@ func (p *Peer) processMessageLoopWithChannel() {
 				p.OutMessagesChan <- response
 
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				Log.Info().Msg("received cluster info msg")
+				// Log.Info().Msg("received cluster info msg")
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
 
 				// Log.Info().Msg("Received cluster info")
