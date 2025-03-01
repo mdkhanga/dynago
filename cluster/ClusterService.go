@@ -151,7 +151,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 			members := make([]*pb.Member, len(c.clusterMap))
 
-			for key, pr := range c.clusterMap {
+			for _, pr := range c.clusterMap {
 
 				now := time.Now().UnixMilli()
 
@@ -162,7 +162,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 				if now-pr.Timestamp > 60000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
-					Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
+					// Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
 					pr.Stop()
 					// continue
 				} else {
@@ -322,7 +322,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 			}
 
 			if !exists || peer.Timestamp > receivedMember.Timestamp {
-				Log.Info().Int32("Found an extra host on our side", *peer.Port).Send()
+				// Log.Info().Int32("Found an extra host on our side", *peer.Port).Send()
 				responseMembers = append(responseMembers, &pb.Member{
 					Hostname:  *peer.Host,
 					Port:      *peer.Port,

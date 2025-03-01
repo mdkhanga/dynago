@@ -159,6 +159,10 @@ func (p *Peer) receiveLoopWithChannel() {
 
 	for {
 
+		if p.Status == 1 {
+			return
+		}
+
 		select {
 
 		case <-ctx.Done():
@@ -242,6 +246,11 @@ func (p *Peer) sendLoopWithChannel() {
 	count := 00
 
 	for {
+
+		if p.Status == 1 {
+			Log.Info().Msg("Peer is inactive. Exit send loop")
+			return
+		}
 
 		// Log.Info().Msg("In sendLoopWithChannel")
 
@@ -385,6 +394,10 @@ func (p *Peer) processMessageLoopWithChannel() {
 
 	for {
 
+		if p.Status == 1 {
+			return
+		}
+
 		select {
 
 		case <-p.stopChan:
@@ -500,7 +513,7 @@ func (p *Peer) processMessageLoopWithChannel() {
 
 }
 
-func (p *Peer) pingLoop() {
+/* func (p *Peer) pingLoop() {
 
 	cfg := config.GetConfig()
 	ctx := p.stream.Context()
@@ -535,7 +548,7 @@ func (p *Peer) pingLoop() {
 
 	}
 
-}
+} */
 
 func (p *Peer) pingLoopWithChannel() {
 
@@ -545,6 +558,10 @@ func (p *Peer) pingLoopWithChannel() {
 	count := 0
 
 	for {
+
+		if p.Status == 1 {
+			return
+		}
 
 		// Log.Info().Msg("In Ping Loop")
 
