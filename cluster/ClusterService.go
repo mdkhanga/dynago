@@ -66,8 +66,8 @@ func (c *cluster) Stop() {
 
 func (c *cluster) AddToCluster(m *Peer) error {
 
-	// c.mu.Lock()
-	// defer c.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
 	/* if _, exists := c.clusterMap[key]; exists {
@@ -147,7 +147,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 			i := 0
 
-			// c.mu.Lock()
+			c.mu.Lock()
 
 			members := make([]*pb.Member, len(c.clusterMap))
 
@@ -176,7 +176,7 @@ func (c *cluster) ClusterInfoGossip() {
 				// pr.mu.Unlock()
 
 			}
-			// c.mu.Unlock()
+			c.mu.Unlock()
 
 			cls := pb.Cluster{Members: members}
 
@@ -187,7 +187,7 @@ func (c *cluster) ClusterInfoGossip() {
 				Content: &pb.ServerMessage_ClusterInfoRequest{ClusterInfoRequest: &clsReq},
 			}
 
-			// c.mu.Lock()
+			c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
@@ -207,7 +207,7 @@ func (c *cluster) ClusterInfoGossip() {
 				// Log.Info().Msg("Sent ClusterInfo Msg")
 
 			}
-			// c.mu.Unlock()
+			c.mu.Unlock()
 
 			result := strings.Join(items, ", ")
 			Log.Info().Str("Cluster members", result).Send()
