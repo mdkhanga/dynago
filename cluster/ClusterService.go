@@ -155,7 +155,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 				now := time.Now().UnixMilli()
 
-				// pr.mu.Lock()
+				pr.mu.Lock()
 				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
@@ -173,7 +173,7 @@ func (c *cluster) ClusterInfoGossip() {
 
 				i++
 
-				// pr.mu.Unlock()
+				pr.mu.Unlock()
 
 			}
 			c.mu.Unlock()
@@ -255,14 +255,14 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if response == false {
+	/* if response == false {
 		var items []string
 		for _, pr := range c.clusterMap {
 			items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, *&pr.Timestamp))
 		}
 		result := strings.Join(items, ", ")
 		Log.Info().Str("Cluster members", result).Send()
-	}
+	}*/
 
 	for _, m := range received {
 
@@ -273,7 +273,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 			// Log.Info().Int32("existing peer", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
 
 			// Conflict resolution based on timestamp
-			if m.Timestamp > existingPeer.Timestamp {
+			if m.Timestamp >= existingPeer.Timestamp {
 
 				// Log.Info().Str("updating based on received peer", m.Hostname).Int32("port", m.Port).Int64("timestamp", m.Timestamp).Send()
 
@@ -321,7 +321,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 				continue
 			}
 
-			if !exists || peer.Timestamp > receivedMember.Timestamp {
+			if !exists || peer.Timestamp >= receivedMember.Timestamp {
 				// Log.Info().Int32("Found an extra host on our side", *peer.Port).Send()
 				responseMembers = append(responseMembers, &pb.Member{
 					Hostname:  *peer.Host,
