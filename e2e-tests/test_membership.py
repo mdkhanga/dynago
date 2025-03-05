@@ -5,8 +5,11 @@ import requests
 DYNAGO_CMD = "./dynago"
 IP = "localhost"
 PORT_A = 8081
+A="localhost:8081"
 PORT_B = 8085
+B="localhost:8085"
 PORT_C = 8087
+C="localhost:8087"
 HTTP_PORT_A = 8082
 HTTP_PORT_B = 8086
 HTTP_PORT_C = 8088
@@ -43,10 +46,10 @@ def get_cluster_members(url):
 def test_dynago_cluster():
     try:
         # Step 1: Start Server A
-        start_server("A", PORT_A, HTTP_PORT_A)
+        start_server("localhost:8081", PORT_A, HTTP_PORT_A)
 
         # Step 2: Start Server B pointing to A
-        start_server("B", PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
+        start_server("localhost:8085", PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
 
         # Step 3: Start Server C pointing to A
         start_server("C", PORT_C, HTTP_PORT_C, f"{IP}:{PORT_A}")
