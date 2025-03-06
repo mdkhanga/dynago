@@ -166,7 +166,8 @@ func (c *cluster) ClusterInfoGossip() {
 					pr.Stop()
 					// continue
 				} else {
-					items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, pr.Timestamp))
+					// items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, pr.Timestamp))
+					items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 				}
 
 				members[i] = &pb.Member{Hostname: *pr.Host, Port: *pr.Port, Timestamp: pr.Timestamp, Status: int32(pr.Status)}

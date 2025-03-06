@@ -88,6 +88,7 @@ func (s *server) startGinServer(rbind string) {
 	router.GET("/kvstore", getInfo)
 	router.GET("/kvstore/:key", s.getValue)
 	router.POST("/kvstore", s.setValue)
+	router.GET("/members", s.GetPeerList)
 
 	// Initialize the HTTP server
 	s.httpServer = &http.Server{
@@ -173,6 +174,13 @@ func (s *server) setValue(c *gin.Context) {
 
 func (s *server) CopyReplica(replica *m.KeyValue) {
 	storage.Store.Set(replica)
+}
+
+func (s *server) getMembers(c *gin.Context) {
+
+	peers := s.GetPeerList()
+
+	c.JSON(http.StatusOK, peers)
 }
 
 func (s *server) GetPeerList() []string {
