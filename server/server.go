@@ -88,7 +88,7 @@ func (s *server) startGinServer(rbind string) {
 	router.GET("/kvstore", getInfo)
 	router.GET("/kvstore/:key", s.getValue)
 	router.POST("/kvstore", s.setValue)
-	router.GET("/members", s.GetPeerList)
+	router.GET("/members", s.getMembers)
 
 	// Initialize the HTTP server
 	s.httpServer = &http.Server{

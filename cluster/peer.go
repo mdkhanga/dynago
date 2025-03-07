@@ -12,9 +12,8 @@ import (
 )
 
 type Peer struct {
-	Host *string
-	Port *int32
-	// stream      pb.KVSevice_CommunicateServer
+	Host        *string
+	Port        *int32
 	stream      IStream
 	InMessages  utils.MessageQueue
 	OutMessages utils.MessageQueue
@@ -63,20 +62,15 @@ func (p *Peer) Init() {
 
 	p.stopChan = make(chan struct{})
 
-	// go p.receiveLoop()
 	go p.receiveLoopWithChannel()
 
-	// go p.processMessageLoop()
 	go p.processMessageLoopWithChannel()
 
-	// go p.sendLoop()
 	go p.sendLoopWithChannel()
 
 	if p.Clientend != true {
 
-		// start the ping loop
 		Log.Info().Msg("Starting the ping loop")
-		// p.pingLoop()
 		go p.pingLoopWithChannel()
 
 	} else {
@@ -95,7 +89,6 @@ func (p *Peer) Stop() {
 	p.close()
 }
 
-// func NewPeer(s pb.KVSevice_CommunicateServer) IPeer {
 func NewPeer(s IStream, client bool) IPeer {
 	return &Peer{
 		stream:      s,
@@ -126,34 +119,25 @@ func (p *Peer) receiveLoopWithChannel() {
 
 		case <-ctx.Done():
 			Log.Info().Msg("Client disconnected or context canceled (receiver)")
-			// closeStopChan()
-			// p.close()
 			p.Stop()
 			return
-		case <-p.stopChan: // Stop signal received
+		case <-p.stopChan:
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 
 		default:
-			// in, err := stream.Recv()
-			// in, err := p.stream.Recv()
+
 			in, err := p.stream.Receive()
 			if err != nil {
 
-				// code := status.Code(err)
-
-				// if code == codes.Unavailable || code == codes.Canceled || code == codes.DeadlineExceeded {
-
 				Log.Info().Msg("Unable to read from the stream. server seems unavailable")
-				// closeStopChan()
-				// p.close()
+
 				p.Stop()
 				return
 				// }
 			}
 
 			count++
-			// Log.Info().Int("received  msg", count).Send()
 
 			p.InMessagesChan <- in
 
@@ -175,8 +159,6 @@ func (p *Peer) sendLoopWithChannel() {
 			Log.Info().Msg("Peer is inactive. Exit send loop")
 			return
 		}
-
-		// Log.Info().Msg("In sendLoopWithChannel")
 
 		select {
 		case <-ctx.Done(): // Client disconnected or context canceled
