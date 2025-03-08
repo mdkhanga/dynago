@@ -201,18 +201,15 @@ func (p *Peer) processMessageLoopWithChannel() {
 
 		case msg := <-p.InMessagesChan:
 
-			// msg := <-p.InMessagesChan
 			if msg == nil {
 				time.Sleep(1 * time.Second) // Wait before checking again
 				continue
 			}
 
-			// var response *pb.ServerMessage
 			switch msg.Type {
 			case pb.MessageType_PING:
 
 				count++
-				// Log.Info().Int("received ping msg", count).Send()
 
 				host := msg.GetPing().GetHostname()
 				port := msg.GetPing().GetPort()
@@ -232,11 +229,6 @@ func (p *Peer) processMessageLoopWithChannel() {
 					p.Port = &port
 					p.Timestamp = time.Now().UnixMilli()
 					p.Mine = false
-
-					/* Log.Info().
-					Str("Hostname", msg.GetPing().GetHostname()).
-					Int32("port", msg.GetPing().GetPort()).
-					Msg("Adding to cluster") */
 
 					ClusterService.AddToCluster(p)
 					Log.Info().Str("Hostname", host).
@@ -261,29 +253,20 @@ func (p *Peer) processMessageLoopWithChannel() {
 				p.OutMessagesChan <- response
 
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
-				// Log.Info().Msg("received cluster info msg")
+
 				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
 
-				// Log.Info().Msg("Received cluster info")
+				cls := pb.Cluster{Members: diff}
 
-				if len(diff) > 0 {
+				clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
 
-					// Log.Info().Any("Sending back diff ", diff).Send()
-					cls := pb.Cluster{Members: diff}
+				clsServerMsg := pb.ServerMessage{
+					Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
+					Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
 
-					clsResp := pb.ClusterInfoResponse{Status: pb.ClusterInfoResponse_NEED_UPDATES, Cluster: &cls}
+				p.OutMessagesChan <- &clsServerMsg
 
-					clsServerMsg := pb.ServerMessage{
-						Type:    pb.MessageType_CLUSTER_INFO_RESPONSE,
-						Content: &pb.ServerMessage_ClusterInfoReponse{ClusterInfoReponse: &clsResp}}
-
-					// p.OutMessages.Enqueue(&clsServerMsg)
-					p.OutMessagesChan <- &clsServerMsg
-				} else {
-					// Log.Info().Msg("Nothing to send back")
-				}
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
-				// Log.Info().Msg("Received cluster info response")
 				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().GetMembers(), false)
 
 			case pb.MessageType_KEY_VALUE:
@@ -294,13 +277,11 @@ func (p *Peer) processMessageLoopWithChannel() {
 				storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
 			case pb.MessageType_PING_RESPONSE:
-				// Log.Info().Msg("received ping response msg")
+
 				// no op for now
 			default:
 				Log.Info().Msg("Unknown message type received")
 			}
-
-			// p.OutMessagesChan <- response
 
 		}
 
@@ -320,8 +301,6 @@ func (p *Peer) pingLoopWithChannel() {
 		if p.Status == 1 {
 			return
 		}
-
-		// Log.Info().Msg("In Ping Loop")
 
 		select {
 
@@ -343,7 +322,6 @@ func (p *Peer) pingLoopWithChannel() {
 			}
 
 			count++
-			// Log.Info().Int("Sending ping msg", count).Send()
 			p.OutMessagesChan <- msg
 		}
 
