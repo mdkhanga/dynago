@@ -187,16 +187,16 @@ func (s *server) GetPeerList() []string {
 
 	peers, _ := cluster.ClusterService.ListCluster()
 
-	peerhostports := make([]string, len(peers))
+	var peerhostports []string
 
-	for i, p := range peers {
+	for _, p := range peers {
 
 		if p.Status == 1 {
 			continue
 		}
 
 		ph := fmt.Sprintf("%s:%d", *p.Host, *p.Port)
-		peerhostports[i] = ph
+		peerhostports = append(peerhostports, ph)
 
 	}
 
