@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"fmt"
-	"strings"
+	// "strings"
 	"sync"
 
 	"time"
@@ -23,7 +23,6 @@ var (
 type cluster struct {
 	mu         sync.Mutex
 	clusterMap map[string]*Peer
-	// clusterMap sync.Map
 }
 
 type IClusterService interface {
@@ -33,7 +32,6 @@ type IClusterService interface {
 	Exists(Hostnanme string, port int32) (bool, error)
 	ClusterInfoGossip()
 	MergePeerLists(received []*pb.Member, response bool) []*pb.Member
-	MonitorPeers()
 	Replicate(kv *models.KeyValue)
 	Stop()
 	Start()
@@ -70,15 +68,9 @@ func (c *cluster) AddToCluster(m *Peer) error {
 	defer c.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
-	/* if _, exists := c.clusterMap[key]; exists {
-		return fmt.Errorf("member %s already exists in the cluster", key)
-	} */
 
 	m.Status = 0
-
-	// Log.Info().Int32("Adding timestamp for ", *m.Port).Int64("new timestamp", m.Timestamp).Send()
 	c.clusterMap[key] = m
-	// Log.Info().Str("Added key to cluster", key).Send()
 	return nil
 }
 
@@ -92,7 +84,6 @@ func (c *cluster) RemoveFromCluster(Hostname string, port int32) error {
 		return fmt.Errorf("member %s does not exist in the cluster", key)
 	}
 
-	// delete(c.clusterMap, key)
 	c.clusterMap[key].Status = 1
 	return nil
 }
@@ -137,11 +128,8 @@ func (c *cluster) ClusterInfoGossip() {
 
 		select {
 		case <-StopGossip:
-			// Signal received to stop the loop
-			Log.Info().Msg("Stopping clusterInfoGossip.")
 			return
 		case <-time.After(1 * time.Second):
-			// Do your stuff here
 
 			var items []string
 
@@ -160,13 +148,11 @@ func (c *cluster) ClusterInfoGossip() {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
 
-				if now-pr.Timestamp > 60000 && pr.Mine == false {
+				if now-pr.Timestamp > 15000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
-					// Log.Info().Str("Peer marked as inactive", key).Int64("now", now).Int64("peer timestamp", pr.Timestamp).Send()
 					pr.Stop()
-					// continue
+
 				} else {
-					// items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, pr.Timestamp))
 					items = append(items, fmt.Sprintf("%s:%d", *pr.Host, *pr.Port))
 				}
 
@@ -205,14 +191,11 @@ func (c *cluster) ClusterInfoGossip() {
 
 				pr.OutMessagesChan <- &clsServerMsg
 
-				// Log.Info().Msg("Sent ClusterInfo Msg")
-
 			}
 			c.mu.Unlock()
 
-			result := strings.Join(items, ", ")
-			Log.Info().Str("Cluster members", result).Send()
-			//  time.Sleep(1 * time.Second) // Wait before checking again
+			// result := strings.Join(items, ", ")
+			// Log.Info().Str("Cluster members", result).Send()
 
 		}
 
@@ -249,21 +232,10 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Member {
 
-	// Log.Info().Any("Merging peer lists received", received).Bool("resp", response).Send()
-
 	cfg := config.GetConfig()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	/* if response == false {
-		var items []string
-		for _, pr := range c.clusterMap {
-			items = append(items, fmt.Sprintf("%s:%d:%d", *pr.Host, *pr.Port, *&pr.Timestamp))
-		}
-		result := strings.Join(items, ", ")
-		Log.Info().Str("Cluster members", result).Send()
-	}*/
 
 	for _, m := range received {
 
@@ -271,12 +243,8 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 		if existingPeer, exists := c.clusterMap[key]; exists {
 
-			// Log.Info().Int32("existing peer", *existingPeer.Port).Int64("timestamp", existingPeer.Timestamp).Send()
-
 			// Conflict resolution based on timestamp
 			if m.Timestamp >= existingPeer.Timestamp {
-
-				// Log.Info().Str("updating based on received peer", m.Hostname).Int32("port", m.Port).Int64("timestamp", m.Timestamp).Send()
 
 				existingPeer.mu.Lock()
 				existingPeer.Timestamp = m.Timestamp
@@ -285,8 +253,6 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 			}
 		} else {
-
-			// Log.Info().Int32("received peer", m.Port).Int64("timestamp", m.Timestamp).Send()
 
 			// New peer
 			c.clusterMap[key] = &Peer{
@@ -315,15 +281,12 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		for key, peer := range c.clusterMap {
 			receivedMember, exists := receivedMap[key]
 
-			// Log.Info().Str("checking key", key).Bool("exists", exists).Send()
-
 			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
-				// Log.Info().Msg("Skipping")
 				continue
 			}
 
 			if !exists || peer.Timestamp >= receivedMember.Timestamp {
-				// Log.Info().Int32("Found an extra host on our side", *peer.Port).Send()
+
 				responseMembers = append(responseMembers, &pb.Member{
 					Hostname:  *peer.Host,
 					Port:      *peer.Port,
@@ -336,28 +299,4 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 	return responseMembers
 
-}
-
-func (c *cluster) MonitorPeers() {
-	for {
-		// Lock the clusterMap for safe access
-		Log.Info().Msg("In the monitor peer")
-		c.mu.Lock()
-		now := time.Now().UnixMilli()
-
-		for key, peer := range c.clusterMap {
-			// Check if the peer's timestamp is older than 5 seconds
-			if now-peer.Timestamp > 5000 && peer.Mine == false {
-				peer.Status = 1 // Mark as inactive
-				// Optionally log or take further action
-				Log.Info().Str("Peer marked as inactive", key).Send()
-			}
-		}
-
-		// Unlock after processing
-		c.mu.Unlock()
-
-		// Sleep for a periodic interval (e.g., 1 second)
-		time.Sleep(2 * time.Second)
-	}
 }
