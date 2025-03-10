@@ -12,18 +12,16 @@ import (
 )
 
 type Peer struct {
-	Host        *string
-	Port        *int32
-	stream      IStream
-	InMessages  utils.MessageQueue
-	OutMessages utils.MessageQueue
-	Timestamp   int64
-	Status      int  // 0 = Active, 1 = Inactive, 2 = unknown
-	Mine        bool // true means peer is directly connected to me
-	stopChan    chan struct{}
-	once        sync.Once
-	Clientend   bool // true = clientside of the peer false = server side of the peer
-	mu          sync.Mutex
+	Host      *string
+	Port      *int32
+	stream    IStream
+	Timestamp int64
+	Status    int  // 0 = Active, 1 = Inactive, 2 = unknown
+	Mine      bool // true means peer is directly connected to me
+	stopChan  chan struct{}
+	once      sync.Once
+	Clientend bool // true = clientside of the peer false = server side of the peer
+	mu        sync.Mutex
 
 	// rewrite in thread safe way
 	InMessagesChan  chan *pb.ServerMessage // Buffered channel for inbound messages
@@ -32,21 +30,7 @@ type Peer struct {
 
 type IPeer interface {
 	Init()
-	ReceivedMessage(message *pb.ServerMessage)
-	SendMessage(message *pb.ServerMessage)
 	Stop()
-}
-
-func (p *Peer) ReceivedMessage(message *pb.ServerMessage) {
-
-	p.InMessages.Enqueue(message)
-
-}
-
-func (p *Peer) SendMessage(message *pb.ServerMessage) {
-
-	p.OutMessages.Enqueue(message)
-
 }
 
 func (p *Peer) close() {
