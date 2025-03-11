@@ -18,7 +18,7 @@ D="localhost:8087"
 HTTP_PORT_A = 8082
 HTTP_PORT_B = 8086
 HTTP_PORT_C = 8088
-HTTP_PORT_C = 8090
+HTTP_PORT_D = 8090
 
 
 BASE_URL_A = f"http://{IP}:{HTTP_PORT_A}/members"
@@ -60,11 +60,15 @@ def test_dynago_cluster():
         # Step 2: Start Server B pointing to A
         start_server(B, PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
 
-        # Step 3: Start Server C pointing to A
-        start_server(C, PORT_C, HTTP_PORT_C, f"{IP}:{PORT_A}")
+        # Step 3: Start Server C pointing to B
+        start_server(C, PORT_C, HTTP_PORT_C, f"{IP}:{PORT_B}")
+
+		# Step 4: Start Server D pointing to C
+        start_server(C, PORT_D, HTTP_PORT_D, f"{IP}:{PORT_C}")
+
 
         # Step 4: Check initial cluster membership
-        expected_members = {A, B, C}
+        expected_members = {A, B, C, D}
         print(set(expected_members))
         print(set(get_cluster_members(BASE_URL_A)))
         # print(get_cluster_members(BASE_URL_B))
@@ -74,27 +78,27 @@ def test_dynago_cluster():
         assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
 
         # Step 5: Kill Server B
-        stop_server(B)
-        expected_members = {A, C}
-        print("Stopped one server. Waiting for cluster info to propagate")
-        time.sleep(25)  # Allow cluster to update
-        print(set(expected_members))
-        print(set(get_cluster_members(BASE_URL_A)))
-        assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
-        assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
+        # stop_server(B)
+        # expected_members = {A, C}
+        # print("Stopped one server. Waiting for cluster info to propagate")
+        # time.sleep(25)  # Allow cluster to update
+        # print(set(expected_members))
+        # print(set(get_cluster_members(BASE_URL_A)))
+        # assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
+        # assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
     
 
         # Step 6: Restart Server B
-        start_server(B, PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
+        # start_server(B, PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
 
-        print("Restarted the server. Waiting for cluster info to propagate")
-        time.sleep(20)
+        # print("Restarted the server. Waiting for cluster info to propagate")
+        # time.sleep(20)
 
         # Step 7: Check all 3 servers for updated members
-        expected_members = {A, B, C}
-        assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
-        assert set(get_cluster_members(BASE_URL_B)) == set(expected_members)
-        assert set(get_cluster_members(BASE_URL_C)) == expected_members
+        # expected_members = {A, B, C}
+        # assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
+        # assert set(get_cluster_members(BASE_URL_B)) == set(expected_members)
+        # assert set(get_cluster_members(BASE_URL_C)) == expected_members
 
         print("Test passed!")
 

@@ -8,7 +8,6 @@ import (
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/models"
 	"github.com/mdkhanga/dynago/storage"
-	"github.com/mdkhanga/dynago/utils"
 )
 
 type Peer struct {
@@ -75,12 +74,10 @@ func (p *Peer) Stop() {
 
 func NewPeer(s IStream, client bool) IPeer {
 	return &Peer{
-		stream:      s,
-		InMessages:  utils.MessageQueue{},
-		OutMessages: utils.MessageQueue{},
-		stopChan:    make(chan struct{}),
-		once:        sync.Once{},
-		Clientend:   client,
+		stream:    s,
+		stopChan:  make(chan struct{}),
+		once:      sync.Once{},
+		Clientend: client,
 
 		InMessagesChan:  make(chan *pb.ServerMessage, 100),
 		OutMessagesChan: make(chan *pb.ServerMessage, 100),

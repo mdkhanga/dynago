@@ -223,7 +223,9 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 			continue
 		}
 
-		pr.OutMessages.Enqueue(&servermsg)
+		// pr.OutMessages.Enqueue(&servermsg)
+
+		pr.OutMessagesChan <- &servermsg
 
 	}
 	c.mu.Unlock()
