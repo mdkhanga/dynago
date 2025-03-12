@@ -12,7 +12,7 @@ B="localhost:8085"
 PORT_C = 8087
 C="localhost:8087"
 PORT_D = 8089
-D="localhost:8087"
+D="localhost:8089"
 
 
 HTTP_PORT_A = 8082
@@ -63,10 +63,9 @@ def test_dynago_cluster():
         # Step 3: Start Server C pointing to B
         start_server(C, PORT_C, HTTP_PORT_C, f"{IP}:{PORT_B}")
 
-		# Step 4: Start Server D pointing to C
-        start_server(C, PORT_D, HTTP_PORT_D, f"{IP}:{PORT_C}")
-
-
+        # Step 4: Start Server D pointing to C
+        start_server(D, PORT_D, HTTP_PORT_D, f"{IP}:{PORT_C}")
+        time.sleep(40)
         # Step 4: Check initial cluster membership
         expected_members = {A, B, C, D}
         print(set(expected_members))
@@ -76,6 +75,7 @@ def test_dynago_cluster():
         assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
         assert set(get_cluster_members(BASE_URL_B)) == set(expected_members)
         assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
+        assert set(get_cluster_members(BASE_URL_D)) == set(expected_members)
 
         # Step 5: Kill Server B
         # stop_server(B)
