@@ -109,6 +109,19 @@ def test_dynago_cluster():
         assert set(get_cluster_members(BASE_URL_A)) == set(expected_members_A)
         assert set(get_cluster_members(BASE_URL_C)) == set(expected_members_CD)
         assert set(get_cluster_members(BASE_URL_D)) == set(expected_members_CD)
+
+        # Restart Server B
+        start_server(B, PORT_B, HTTP_PORT_B, f"{IP}:{PORT_A}")
+
+        print("Restarted the server. Waiting for cluster info to propagate")
+        time.sleep(20)
+        expected_members = {A, B, C, D}
+        print(set(expected_members))
+        print(set(get_cluster_members(BASE_URL_A)))
+        assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
+        assert set(get_cluster_members(BASE_URL_B)) == set(expected_members)
+        assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
+        assert set(get_cluster_members(BASE_URL_D)) == set(expected_members)
     
         print("Test passed!")
 
