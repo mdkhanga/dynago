@@ -45,19 +45,17 @@ func (p *Peer) Init() {
 
 	p.stopChan = make(chan struct{})
 
-	go p.receiveLoopWithChannel()
+	go p.receiveLoop()
 
-	go p.processMessageLoopWithChannel()
+	go p.processMessageLoop()
 
-	go p.sendLoopWithChannel()
+	go p.sendLoop()
 
 	if p.Clientend != true {
 
 		Log.Info().Msg("Starting the ping loop")
-		go p.pingLoopWithChannel()
+		go p.pingLoop()
 
-	} else {
-		Log.Info().Msg("Not Starting the ping loop")
 	}
 
 	<-p.stopChan
@@ -84,7 +82,7 @@ func NewPeer(s IStream, client bool) IPeer {
 	}
 }
 
-func (p *Peer) receiveLoopWithChannel() {
+func (p *Peer) receiveLoop() {
 
 	ctx := p.stream.Context()
 
@@ -128,7 +126,7 @@ func (p *Peer) receiveLoopWithChannel() {
 
 }
 
-func (p *Peer) sendLoopWithChannel() {
+func (p *Peer) sendLoop() {
 
 	ctx := p.stream.Context()
 
@@ -158,7 +156,7 @@ func (p *Peer) sendLoopWithChannel() {
 	}
 }
 
-func (p *Peer) processMessageLoopWithChannel() {
+func (p *Peer) processMessageLoop() {
 
 	count := 0
 
@@ -264,7 +262,7 @@ func (p *Peer) processMessageLoopWithChannel() {
 
 }
 
-func (p *Peer) pingLoopWithChannel() {
+func (p *Peer) pingLoop() {
 
 	cfg := config.GetConfig()
 	ctx := p.stream.Context()

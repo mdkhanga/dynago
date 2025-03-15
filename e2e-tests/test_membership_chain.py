@@ -98,7 +98,18 @@ def test_dynago_cluster():
         assert set(get_cluster_members(BASE_URL_B)) == set(expected_members)
         assert set(get_cluster_members(BASE_URL_C)) == set(expected_members)
         assert set(get_cluster_members(BASE_URL_D)) == set(expected_members)
+
+        # Stop Server B
         
+        stop_server(B)
+        expected_members_A = {A}
+        expected_members_CD = {C,D}
+        print("Stopped B. Waiting for cluster info to propagate")
+        time.sleep(25)  # Allow cluster to update
+        assert set(get_cluster_members(BASE_URL_A)) == set(expected_members_A)
+        assert set(get_cluster_members(BASE_URL_C)) == set(expected_members_CD)
+        assert set(get_cluster_members(BASE_URL_D)) == set(expected_members_CD)
+    
         print("Test passed!")
 
     finally:
