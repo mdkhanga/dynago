@@ -132,8 +132,6 @@ func (p *Peer) sendLoopWithChannel() {
 
 	ctx := p.stream.Context()
 
-	count := 00
-
 	for {
 
 		if p.Status == 1 {
@@ -144,16 +142,12 @@ func (p *Peer) sendLoopWithChannel() {
 		select {
 		case <-ctx.Done(): // Client disconnected or context canceled
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
-			// closeStopChan()
 			p.Stop()
 			return
 		case <-p.stopChan: // Stop signal received
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 		case msg, _ := <-p.OutMessagesChan: // Properly read from channel
-
-			count++
-			// Log.Info().Int("sending msg", count).Send()
 
 			if err := p.stream.Send(msg); err != nil {
 				Log.Error().AnErr("Error sending message:", err)
