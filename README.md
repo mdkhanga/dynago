@@ -40,6 +40,12 @@ make
 
 ./dynago -i ip_addr -p 8087 -h 8088 -seed ip_addr_of_seed:8081
 
+### Get the list of members in the cluster
+
+curl http://ip_addr:httpport/members
+
+The request can be sent to any of the servers
+
 ### Store a Key/Value 
 
 curl -X POST -H "Content-type:application/json" -d '{"Key": "Name", "Value":"somevalue"}' http://ip_addr:8080/kvstore
@@ -47,3 +53,7 @@ curl -X POST -H "Content-type:application/json" -d '{"Key": "Name", "Value":"som
 ### Retrieve a the above value
 
 curl http://ip_addr:8080/kvstore/Name
+
+At the point, replication is being implemented and not yet working. So you need to connect to same server to retrieve values
+
+

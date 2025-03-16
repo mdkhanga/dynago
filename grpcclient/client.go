@@ -62,3 +62,49 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 	}
 
 }
+
+func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPeer) error {
+
+	for {
+
+		Log.Debug().Msg(" Calling grpc server")
+
+		conn, err := grpc.NewClient(*seedHostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			Log.Error().AnErr("did not connect:", err).Send()
+			Log.Info().Msg("Sleep for 5 sec and try again")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		defer conn.Close()
+
+		c := pb.NewKVSeviceClient(conn)
+		ctx := context.Background()
+		// defer cancel()
+
+		Log.Debug().Msg("Create KVclient")
+
+		stream, err := c.Communicate(ctx)
+		if err != nil {
+			Log.Error().Msg("Error getting bidirectinal strem")
+			conn.Close()
+			Log.Info().Msg("Sleep for 5 sec and try again")
+			time.Sleep(5 * time.Second)
+			continue
+
+		}
+
+		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, false)
+
+		p.Init()
+
+		// <-stopChan
+		Log.Info().Msg("Stopping message processing due to stream error")
+		stream.CloseSend()
+		conn.Close()
+		Log.Info().Msg("Sleep for 5 sec and try again")
+		time.Sleep(5 * time.Second)
+
+	}
+
+}
