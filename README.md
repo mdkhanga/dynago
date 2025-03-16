@@ -56,4 +56,10 @@ curl http://ip_addr:8080/kvstore/Name
 
 At the point, replication is being implemented and not yet working. So you need to connect to same server to retrieve values
 
+## What is currently working ?
+
+1. You can create a leader less peer to peer cluster by starting servers as described above. Except first server, the others need to point to another with the --seed option.
+
+Next up: replication
+
 
