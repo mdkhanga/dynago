@@ -13,8 +13,6 @@ import (
 
 var (
 	Log = logger.WithComponent("grpcclient").Log
-	// stopChan = make(chan struct{})
-	// once     sync.Once
 )
 
 func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
@@ -34,7 +32,6 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 		c := pb.NewKVSeviceClient(conn)
 		ctx := context.Background()
-		// defer cancel()
 
 		Log.Debug().Msg("Create KVclient")
 
@@ -80,7 +77,6 @@ func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPe
 
 		c := pb.NewKVSeviceClient(conn)
 		ctx := context.Background()
-		// defer cancel()
 
 		Log.Debug().Msg("Create KVclient")
 
@@ -98,7 +94,6 @@ func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPe
 
 		p.Init()
 
-		// <-stopChan
 		Log.Info().Msg("Stopping message processing due to stream error")
 		stream.CloseSend()
 		conn.Close()
