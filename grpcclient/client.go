@@ -60,46 +60,28 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 }
 
-func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPeer) error {
+func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPeer) (grpc.BidiStreamingClient[pb.ServerMessage, pb.ServerMessage], error) {
 
-	for {
+	conn, err := grpc.NewClient(*seedHostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		Log.Error().AnErr("did not connect:", err).Send()
+		return nil, err
+	}
+	defer conn.Close()
 
-		Log.Debug().Msg(" Calling grpc server")
+	c := pb.NewKVSeviceClient(conn)
+	ctx := context.Background()
 
-		conn, err := grpc.NewClient(*seedHostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			Log.Error().AnErr("did not connect:", err).Send()
-			Log.Info().Msg("Sleep for 5 sec and try again")
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		defer conn.Close()
+	Log.Debug().Msg("Create KVclient")
 
-		c := pb.NewKVSeviceClient(conn)
-		ctx := context.Background()
-
-		Log.Debug().Msg("Create KVclient")
-
-		stream, err := c.Communicate(ctx)
-		if err != nil {
-			Log.Error().Msg("Error getting bidirectinal strem")
-			conn.Close()
-			Log.Info().Msg("Sleep for 5 sec and try again")
-			time.Sleep(5 * time.Second)
-			continue
-
-		}
-
-		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, false)
-
-		p.Init()
-
-		Log.Info().Msg("Stopping message processing due to stream error")
-		stream.CloseSend()
+	stream, err := c.Communicate(ctx)
+	if err != nil {
+		Log.Error().Msg("Error getting bidirectinal strem")
 		conn.Close()
-		Log.Info().Msg("Sleep for 5 sec and try again")
-		time.Sleep(5 * time.Second)
+		return nil, err
 
 	}
+
+	return stream, nil
 
 }
