@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -8,6 +10,8 @@ import (
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/models"
 	"github.com/mdkhanga/dynago/storage"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Peer struct {
@@ -45,6 +49,10 @@ func (p *Peer) Init() {
 
 	p.stopChan = make(chan struct{})
 
+	if p.stream == nil {
+
+	}
+
 	go p.receiveLoop()
 
 	go p.processMessageLoop()
@@ -73,6 +81,17 @@ func (p *Peer) Stop() {
 func NewPeer(s IStream, client bool) IPeer {
 	return &Peer{
 		stream:    s,
+		stopChan:  make(chan struct{}),
+		once:      sync.Once{},
+		Clientend: client,
+
+		InMessagesChan:  make(chan *pb.ServerMessage, 100),
+		OutMessagesChan: make(chan *pb.ServerMessage, 100),
+	}
+}
+
+func NewPeerWIthoutStream(client bool) IPeer {
+	return &Peer{
 		stopChan:  make(chan struct{}),
 		once:      sync.Once{},
 		Clientend: client,
@@ -297,6 +316,46 @@ func (p *Peer) pingLoop() {
 			count++
 			p.OutMessagesChan <- msg
 		}
+
+	}
+
+}
+
+func (p *Peer) connectLoop() {
+
+	for {
+
+		Log.Debug().Msg(" Calling grpc server")
+
+		hostPort := fmt.Sprintf("%s%d", *p.Host, *p.Port)
+
+		conn, err := grpc.NewClient(hostPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			Log.Error().AnErr("did not connect:", err).Send()
+			Log.Info().Msg("Sleep for 5 sec and try again")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		defer conn.Close()
+
+		c := pb.NewKVSeviceClient(conn)
+		ctx := context.Background()
+
+		Log.Debug().Msg("Create KVclient")
+
+		stream, err := c.Communicate(ctx)
+		if err != nil {
+			Log.Error().Msg("Error getting bidirectinal strem")
+			conn.Close()
+			Log.Info().Msg("Sleep for 5 sec and try again")
+			time.Sleep(5 * time.Second)
+			continue
+
+		}
+
+		p.stream = &ClientStream{Stream: stream}
+
+		return
 
 	}
 
