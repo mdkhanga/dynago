@@ -157,14 +157,14 @@ func (p *Peer) sendLoop() {
 		}
 
 		select {
-		case <-ctx.Done(): // Client disconnected or context canceled
+		case <-ctx.Done():
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
 			p.Stop()
 			return
-		case <-p.stopChan: // Stop signal received
+		case <-p.stopChan:
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
-		case msg, _ := <-p.OutMessagesChan: // Properly read from channel
+		case msg, _ := <-p.OutMessagesChan:
 
 			if err := p.stream.Send(msg); err != nil {
 				Log.Error().AnErr("Error sending message:", err)
@@ -296,12 +296,11 @@ func (p *Peer) pingLoop() {
 
 		select {
 
-		case <-ctx.Done(): // Client disconnected or context canceled
+		case <-ctx.Done():
 			Log.Info().Msg("Client disconnected or context canceled (sender)")
-			// closeStopChan()
 			p.Stop()
 			return
-		case <-p.stopChan: // Stop signal received
+		case <-p.stopChan:
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
 
