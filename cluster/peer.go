@@ -50,7 +50,7 @@ func (p *Peer) Init() {
 	p.stopChan = make(chan struct{})
 
 	if p.stream == nil {
-
+		p.connect()
 	}
 
 	go p.receiveLoop()
@@ -320,42 +320,42 @@ func (p *Peer) pingLoop() {
 
 }
 
-func (p *Peer) connectLoop() {
+func (p *Peer) connect() error {
 
-	for {
+	if p.stream == nil {
+		Log.Warn().Msg("Stream already connected. Exiting connect")
+	}
 
-		Log.Debug().Msg(" Calling grpc server")
+	Log.Debug().Msg(" Calling grpc server")
 
-		hostPort := fmt.Sprintf("%s%d", *p.Host, *p.Port)
+	hostPort := fmt.Sprintf("%s%d", *p.Host, *p.Port)
 
-		conn, err := grpc.NewClient(hostPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			Log.Error().AnErr("did not connect:", err).Send()
-			Log.Info().Msg("Sleep for 5 sec and try again")
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		defer conn.Close()
+	conn, err := grpc.NewClient(hostPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		Log.Error().AnErr("did not connect:", err).Send()
+		return err
+	}
+	defer conn.Close()
 
-		c := pb.NewKVSeviceClient(conn)
-		ctx := context.Background()
+	c := pb.NewKVSeviceClient(conn)
+	ctx := context.Background()
 
-		Log.Debug().Msg("Create KVclient")
+	Log.Debug().Msg("Create KVclient")
 
-		stream, err := c.Communicate(ctx)
-		if err != nil {
-			Log.Error().Msg("Error getting bidirectinal strem")
-			conn.Close()
-			Log.Info().Msg("Sleep for 5 sec and try again")
-			time.Sleep(5 * time.Second)
-			continue
-
-		}
-
-		p.stream = &ClientStream{Stream: stream}
-
-		return
+	stream, err := c.Communicate(ctx)
+	if err != nil {
+		Log.Error().Msg("Error getting bidirectinal strem")
+		conn.Close()
+		return err
 
 	}
+
+	p.mu.Lock()
+	p.stream = &ClientStream{Stream: stream}
+	p.mu.Unlock()
+
+	Log.Info().Msg("Connection established ... exiting connect")
+
+	return nil
 
 }
