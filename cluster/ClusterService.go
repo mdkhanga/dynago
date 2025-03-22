@@ -255,12 +255,18 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		} else {
 
 			// New peer
-			c.clusterMap[key] = &Peer{
+			p := NewPeerWithoutStream(&m.Hostname, &m.Port, m.Timestamp, int(m.Status))
+
+			Log.Info().Int32("merged and connecting to", m.Port).Send()
+			c.clusterMap[key] = p
+			// p.Init()
+
+			/* c.clusterMap[key] = &Peer{
 				Host:      &m.Hostname,
 				Port:      &m.Port,
 				Timestamp: m.Timestamp,
 				Status:    int(m.Status),
-			}
+			} */
 
 		}
 

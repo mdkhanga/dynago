@@ -51,6 +51,8 @@ func (p *Peer) Init() {
 
 	if p.stream == nil {
 		p.connect()
+	} else {
+		Log.Info().Msg("Peer already connected")
 	}
 
 	go p.receiveLoop()
@@ -90,11 +92,15 @@ func NewPeer(s IStream, client bool) IPeer {
 	}
 }
 
-func NewPeerWIthoutStream(client bool) IPeer {
+func NewPeerWithoutStream(host *string, p *int32, ts int64, status int) *Peer {
 	return &Peer{
+		Host:      host,
+		Port:      p,
+		Timestamp: ts,
+		Status:    status,
 		stopChan:  make(chan struct{}),
 		once:      sync.Once{},
-		Clientend: client,
+		Clientend: false,
 
 		InMessagesChan:  make(chan *pb.ServerMessage, 100),
 		OutMessagesChan: make(chan *pb.ServerMessage, 100),
