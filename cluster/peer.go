@@ -69,7 +69,7 @@ func (p *Peer) Init() {
 	}
 
 	<-p.stopChan
-	Log.Info().Msg("Stopping message processing due to stream error")
+	Log.Info().Msg("Init Stopping message processing due to stream error")
 
 }
 
@@ -80,7 +80,7 @@ func (p *Peer) Stop() {
 	p.close()
 }
 
-func NewPeer(s IStream, client bool) IPeer {
+func NewPeer(s IStream, client bool) *Peer {
 	return &Peer{
 		stream:    s,
 		stopChan:  make(chan struct{}),
@@ -303,7 +303,7 @@ func (p *Peer) pingLoop() {
 		select {
 
 		case <-ctx.Done():
-			Log.Info().Msg("Client disconnected or context canceled (sender)")
+			Log.Info().Msg("Ping Client disconnected or context canceled (sender)")
 			p.Stop()
 			return
 		case <-p.stopChan:
@@ -328,8 +328,9 @@ func (p *Peer) pingLoop() {
 
 func (p *Peer) connect() error {
 
-	if p.stream == nil {
+	if p.stream != nil {
 		Log.Warn().Msg("Stream already connected. Exiting connect")
+		return nil
 	}
 
 	Log.Debug().Msg(" Calling grpc server")
