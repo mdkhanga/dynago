@@ -26,8 +26,7 @@ type Peer struct {
 	Clientend bool // true = clientside of the peer false = server side of the peer
 	mu        sync.Mutex
 
-	// rewrite in thread safe way
-	InMessagesChan  chan *pb.ServerMessage // Buffered channel for inbound messages
+	InMessagesChan  chan *pb.ServerMessage
 	OutMessagesChan chan *pb.ServerMessage
 }
 
