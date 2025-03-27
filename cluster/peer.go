@@ -182,8 +182,6 @@ func (p *Peer) sendLoop() {
 
 func (p *Peer) processMessageLoop() {
 
-	count := 0
-
 	for {
 
 		if p.Status == 1 {
@@ -205,8 +203,6 @@ func (p *Peer) processMessageLoop() {
 
 			switch msg.Type {
 			case pb.MessageType_PING:
-
-				count++
 
 				host := msg.GetPing().GetHostname()
 				port := msg.GetPing().GetPort()
@@ -294,6 +290,8 @@ func (p *Peer) pingLoop() {
 	count := 0
 
 	for {
+
+		Log.Info().Msg("In the ping loop")
 
 		if p.Status == 1 {
 			return
