@@ -287,11 +287,7 @@ func (p *Peer) pingLoop() {
 	cfg := config.GetConfig()
 	ctx := p.stream.Context()
 
-	count := 0
-
 	for {
-
-		Log.Info().Msg("In the ping loop")
 
 		if p.Status == 1 {
 			return
@@ -315,7 +311,6 @@ func (p *Peer) pingLoop() {
 				},
 			}
 
-			count++
 			p.OutMessagesChan <- msg
 		}
 
