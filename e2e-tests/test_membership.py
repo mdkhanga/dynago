@@ -68,7 +68,7 @@ def test_dynago_cluster():
         stop_server(B)
         expected_members = {A, C}
         print("Stopped one server. Waiting for cluster info to propagate")
-        time.sleep(25)  # Allow cluster to update
+        time.sleep(25)  
         print(set(expected_members))
         print(set(get_cluster_members(BASE_URL_A)))
         assert set(get_cluster_members(BASE_URL_A)) == set(expected_members)
@@ -89,7 +89,7 @@ def test_dynago_cluster():
         print("Test passed!")
 
     finally:
-        # Cleanup
+        
         for server_name in list(servers.keys()):
             stop_server(server_name)
 
