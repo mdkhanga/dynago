@@ -64,6 +64,8 @@ func (c *cluster) Stop() {
 
 func (c *cluster) AddToCluster(m *Peer) error {
 
+	// Log.Info().Msg("Entering Add to cluster")
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -71,6 +73,7 @@ func (c *cluster) AddToCluster(m *Peer) error {
 
 	m.Status = 0
 	c.clusterMap[key] = m
+	// Log.Info().Msg("Exiting Add to cluster")
 	return nil
 }
 
@@ -148,8 +151,9 @@ func (c *cluster) ClusterInfoGossip() {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
 
-				if now-pr.Timestamp > 15000 && pr.Mine == false {
+				if now-pr.Timestamp > 30000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
+					Log.Info().Msg("Gossip stopping peer")
 					pr.Stop()
 
 				} else {
