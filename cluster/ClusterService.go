@@ -64,6 +64,8 @@ func (c *cluster) Stop() {
 
 func (c *cluster) AddToCluster(m *Peer) error {
 
+	// Log.Info().Msg("Entering Add to cluster")
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -71,6 +73,7 @@ func (c *cluster) AddToCluster(m *Peer) error {
 
 	m.Status = 0
 	c.clusterMap[key] = m
+	// Log.Info().Msg("Exiting Add to cluster")
 	return nil
 }
 
