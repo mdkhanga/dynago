@@ -7,6 +7,7 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
+	"github.com/mdkhanga/dynago/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -46,10 +47,11 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 		}
 
 		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, false)
-		x := "localhost"
-		y := int32(8085)
-		p.Host = &x
-		p.Port = &y
+
+		host, port, _ := utils.ParseHostPort(*seedHostport)
+
+		p.Host = &host
+		p.Port = &port
 		cluster.ClusterService.AddToCluster(p)
 		p.Init()
 

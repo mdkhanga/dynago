@@ -151,9 +151,8 @@ func (c *cluster) ClusterInfoGossip() {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
 
-				if now-pr.Timestamp > 30000 && pr.Mine == false {
+				if now-pr.Timestamp > 15000 && pr.Mine == false {
 					pr.Status = 1 // Mark as inactive
-					Log.Info().Msg("Gossip stopping peer")
 					pr.Stop()
 
 				} else {
