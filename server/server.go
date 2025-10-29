@@ -24,11 +24,10 @@ var (
 )
 
 type server struct {
-	Host     string
-	HttpPort int32
-	GrpcPort int32
-	Seed     string
-	// kvMap        map[string]string
+	Host         string
+	HttpPort     int32
+	GrpcPort     int32
+	Seed         string
 	httpServer   *http.Server
 	grpcServer   *grpc.Server
 	grpcListener net.Listener
