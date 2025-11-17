@@ -6,6 +6,9 @@ import (
 	"github.com/mdkhanga/dynago/logger"
 	"github.com/mdkhanga/dynago/server"
 	"github.com/mdkhanga/dynago/utils"
+
+	"math/rand"
+	"time"
 )
 
 func main() {
@@ -13,6 +16,8 @@ func main() {
 	Logger := logger.Globallogger.Log
 
 	Logger.Info().Msg("Welcome to key value store")
+
+	rand.Seed(time.Now().UnixNano())
 
 	host := flag.String("i", "localhost", "ipv4 address tp bind to")
 	portPtr := flag.String("p", "8081", "tcp port to listenon")

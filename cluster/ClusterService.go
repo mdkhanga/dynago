@@ -246,7 +246,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 		if existingPeer, exists := c.clusterMap[key]; exists {
 
-			// Log.Info().Str("Merge found key", key).Send()
+			// Log.Info().Str("Merge found key do not need to call connect", key).Send()
 
 			// Conflict resolution based on timestamp
 			if m.Timestamp >= existingPeer.Timestamp {
@@ -262,9 +262,9 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 			// New peer
 			p := NewPeerWithoutStream(&m.Hostname, &m.Port, m.Timestamp, int(m.Status))
 
-			// Log.Info().Str("merged did not find key", key).Send()
+			// Log.Info().Str("merged did not find key. need to call init and perhaps connect", key).Send()
 			c.clusterMap[key] = p
-			// p.Init()
+			go p.Init()
 
 			/* c.clusterMap[key] = &Peer{
 				Host:      &m.Hostname,

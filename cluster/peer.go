@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -18,6 +19,7 @@ type Peer struct {
 	Host      *string
 	Port      *int32
 	stream    IStream
+	conn      *grpc.ClientConn
 	Timestamp int64
 	Status    int  // 0 = Active, 1 = Inactive, 2 = unknown
 	Mine      bool // true means peer is directly connected to me
@@ -40,6 +42,9 @@ func (p *Peer) close() {
 		if p.stopChan != nil {
 			close(p.stopChan)
 		}
+		if p.conn != nil {
+			p.conn.Close()
+		}
 	})
 
 }
@@ -49,7 +54,14 @@ func (p *Peer) Init() {
 	p.stopChan = make(chan struct{})
 
 	if p.stream == nil {
-		p.connect()
+		Log.Info().Int32("No connection we need to call connect for", *p.Port).Send()
+		// random delay
+		time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+		err := p.connect()
+		if err != nil {
+			Log.Error().AnErr("Error connecting", err)
+			return
+		}
 	} else {
 		Log.Info().Msg("Peer already connected")
 	}
@@ -330,16 +342,15 @@ func (p *Peer) connect() error {
 		return nil
 	}
 
-	Log.Debug().Msg(" Calling grpc server")
+	hostPort := fmt.Sprintf("%s:%d", *p.Host, *p.Port)
 
-	hostPort := fmt.Sprintf("%s%d", *p.Host, *p.Port)
+	Log.Info().Str(" Calling grpc server", hostPort).Send()
 
 	conn, err := grpc.NewClient(hostPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		Log.Error().AnErr("did not connect:", err).Send()
 		return err
 	}
-	defer conn.Close()
 
 	c := pb.NewKVSeviceClient(conn)
 	ctx := context.Background()
@@ -356,6 +367,7 @@ func (p *Peer) connect() error {
 
 	p.mu.Lock()
 	p.stream = &ClientStream{Stream: stream}
+	p.conn = conn
 	p.mu.Unlock()
 
 	Log.Info().Msg("Connection established ... exiting connect")
