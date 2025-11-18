@@ -15,6 +15,13 @@ var (
 	Store = MemoryStore{kvMap: make(map[string]string), mu: sync.Mutex{}}
 )
 
+func NewMemoryStore() *MemoryStore {
+	return &MemoryStore{
+		kvMap: make(map[string]string),
+		mu:    sync.Mutex{},
+	}
+}
+
 func (s *MemoryStore) Set(kv *m.KeyValue) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
