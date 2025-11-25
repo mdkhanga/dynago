@@ -64,6 +64,9 @@ At the point, replication is being implemented and not yet working. So you need 
 
 ### Next up 
 
-replication
+Uniform distribution of keys using consistent hashing.   
+
+We have a dynamic leaderless cluster to which you can add or remove servers.   
+With consistent hashing, we have a scalable in-memory key value store.
 
 
