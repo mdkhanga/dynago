@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mdkhanga/dynago/config"
+	"github.com/mdkhanga/dynago/consistenthash"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
 	"github.com/mdkhanga/dynago/models"
@@ -15,6 +16,7 @@ import (
 
 var (
 	ClusterService               = New()
+	HashRing                     = consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes)
 	Log                          = logger.WithComponent("cluster").Log
 	StopGossip     chan struct{} = make(chan struct{})
 	once           sync.Once
@@ -33,6 +35,9 @@ type IClusterService interface {
 	ClusterInfoGossip()
 	MergePeerLists(received []*pb.Member, response bool) []*pb.Member
 	Replicate(kv *models.KeyValue)
+	GetNodeForKey(key string) (string, bool)
+	ForwardGet(nodeID string, key string) (*models.KeyValue, error)
+	ForwardSet(nodeID string, key string, value string) error
 	Stop()
 	Start()
 }
@@ -71,8 +76,17 @@ func (c *cluster) AddToCluster(m *Peer) error {
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
 
+	// Check if this is a new node or just an update
+	_, existsInCluster := c.clusterMap[key]
+
 	m.Status = 0
 	c.clusterMap[key] = m
+
+	// Only add node to hash ring if it's new
+	if !existsInCluster {
+		HashRing.AddNode(key)
+	}
+
 	// Log.Info().Msg("Exiting Add to cluster")
 	return nil
 }
@@ -88,6 +102,10 @@ func (c *cluster) RemoveFromCluster(Hostname string, port int32) error {
 	}
 
 	c.clusterMap[key].Status = 1
+
+	// Remove node from hash ring
+	HashRing.RemoveNode(key)
+
 	return nil
 }
 
@@ -310,4 +328,113 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 	return responseMembers
 
+}
+
+// GetNodeForKey returns the node ID (host:port) responsible for storing the given key
+func (c *cluster) GetNodeForKey(key string) (string, bool) {
+	return HashRing.GetNode(key)
+}
+
+// ForwardGet forwards a GET request to the specified node and waits for response
+func (c *cluster) ForwardGet(nodeID string, key string) (*models.KeyValue, error) {
+	c.mu.Lock()
+
+	// Find a connected peer for this node
+	var peer *Peer
+	for _, pr := range c.clusterMap {
+		peerID := fmt.Sprintf("%s:%d", *pr.Host, *pr.Port)
+		if peerID == nodeID && pr.Status == 0 {
+			// Prefer client-side peers (Clientend=false) as they initiated the connection
+			if peer == nil || pr.Clientend == false {
+				peer = pr
+			}
+		}
+	}
+	c.mu.Unlock()
+
+	if peer == nil {
+		return nil, fmt.Errorf("no active connection to node %s", nodeID)
+	}
+
+	Log.Info().
+		Str("node", nodeID).
+		Str("key", key).
+		Bool("clientend", peer.Clientend).
+		Msg("Forwarding GET request")
+
+	// Send GET request
+	request := &pb.ServerMessage{
+		Type: pb.MessageType_FORWARD_GET_REQUEST,
+		Content: &pb.ServerMessage_ForwardGetRequest{
+			ForwardGetRequest: &pb.ForwardGetRequest{
+				Key: key,
+			},
+		},
+	}
+
+	peer.OutMessagesChan <- request
+
+	// Wait for response with timeout
+	select {
+	case <-time.After(5 * time.Second):
+		return nil, fmt.Errorf("timeout waiting for GET response from %s", nodeID)
+	case resp := <-peer.getResponseChan:
+		if !resp.Found {
+			return &models.KeyValue{Key: key, Value: ""}, nil
+		}
+		return &models.KeyValue{Key: resp.Key, Value: resp.Value}, nil
+	}
+}
+
+// ForwardSet forwards a SET request to the specified node and waits for response
+func (c *cluster) ForwardSet(nodeID string, key string, value string) error {
+	c.mu.Lock()
+
+	// Find a connected peer for this node
+	var peer *Peer
+	for _, pr := range c.clusterMap {
+		peerID := fmt.Sprintf("%s:%d", *pr.Host, *pr.Port)
+		if peerID == nodeID && pr.Status == 0 {
+			// Prefer client-side peers (Clientend=false) as they initiated the connection
+			if peer == nil || pr.Clientend == false {
+				peer = pr
+			}
+		}
+	}
+	c.mu.Unlock()
+
+	if peer == nil {
+		return fmt.Errorf("no active connection to node %s", nodeID)
+	}
+
+	Log.Info().
+		Str("node", nodeID).
+		Str("key", key).
+		Str("value", value).
+		Bool("clientend", peer.Clientend).
+		Msg("Forwarding SET request")
+
+	// Send SET request
+	request := &pb.ServerMessage{
+		Type: pb.MessageType_FORWARD_SET_REQUEST,
+		Content: &pb.ServerMessage_ForwardSetRequest{
+			ForwardSetRequest: &pb.ForwardSetRequest{
+				Key:   key,
+				Value: value,
+			},
+		},
+	}
+
+	peer.OutMessagesChan <- request
+
+	// Wait for response with timeout
+	select {
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("timeout waiting for SET response from %s", nodeID)
+	case resp := <-peer.setResponseChan:
+		if !resp.Success {
+			return fmt.Errorf("SET failed: %s", resp.Error)
+		}
+		return nil
+	}
 }

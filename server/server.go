@@ -155,20 +155,89 @@ func getInfo(c *gin.Context) {
 
 func (s *server) getValue(c *gin.Context) {
 	key := c.Param("key")
-	value := storage.Store.Get(key).Value
-	jsonString := fmt.Sprintf("{\"%s\":\"%s\"}", key, value)
-	c.JSON(http.StatusOK, jsonString)
+
+	// Determine which node should have this key
+	nodeID, found := cluster.ClusterService.GetNodeForKey(key)
+	if !found {
+		Log.Error().Str("key", key).Msg("No node found in hash ring")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "No nodes available"})
+		return
+	}
+
+	cfg := config.GetConfig()
+	localNodeID := fmt.Sprintf("%s:%d", cfg.Hostname, cfg.GrpcPort)
+
+	Log.Info().
+		Str("key", key).
+		Str("target_node", nodeID).
+		Str("local_node", localNodeID).
+		Msg("Getting key")
+
+	var kv *m.KeyValue
+	var err error
+
+	// Check if this is the correct node
+	if nodeID == localNodeID {
+		// Get locally
+		kv = storage.Store.Get(key)
+		Log.Info().Str("key", key).Str("value", kv.Value).Msg("Retrieved key locally")
+	} else {
+		// Forward to the correct node
+		Log.Info().Str("key", key).Str("node", nodeID).Msg("Forwarding GET request to owner node")
+		kv, err = cluster.ClusterService.ForwardGet(nodeID, key)
+		if err != nil {
+			Log.Error().Err(err).Str("key", key).Str("node", nodeID).Msg("Failed to forward GET request")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"key":   key,
+		"value": kv.Value,
+		"node":  nodeID,
+	})
 }
 
 func (s *server) setValue(c *gin.Context) {
 	var input m.KeyValue
 	c.BindJSON(&input)
-	// s.kvMap[input.Key] = input.Value
-	storage.Store.Set(&input)
-	Log.Info().Str("Settling key =", input.Key).Str("val=", input.Value)
-	cluster.ClusterService.Replicate(&input)
-	c.JSON(http.StatusOK, "Stored the key value")
 
+	// Determine which node should store this key
+	nodeID, found := cluster.ClusterService.GetNodeForKey(input.Key)
+	if !found {
+		Log.Error().Str("key", input.Key).Msg("No node found in hash ring")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "No nodes available"})
+		return
+	}
+
+	cfg := config.GetConfig()
+	localNodeID := fmt.Sprintf("%s:%d", cfg.Hostname, cfg.GrpcPort)
+
+	Log.Info().
+		Str("key", input.Key).
+		Str("value", input.Value).
+		Str("target_node", nodeID).
+		Str("local_node", localNodeID).
+		Msg("Setting key")
+
+	// Check if this is the correct node
+	if nodeID == localNodeID {
+		// Store locally
+		storage.Store.Set(&input)
+		Log.Info().Str("key", input.Key).Msg("Stored key locally")
+		c.JSON(http.StatusOK, gin.H{"message": "Stored the key value", "node": nodeID})
+	} else {
+		// Forward to the correct node
+		Log.Info().Str("key", input.Key).Str("node", nodeID).Msg("Forwarding SET request to owner node")
+		err := cluster.ClusterService.ForwardSet(nodeID, input.Key, input.Value)
+		if err != nil {
+			Log.Error().Err(err).Str("key", input.Key).Str("node", nodeID).Msg("Failed to forward SET request")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Stored the key value", "node": nodeID})
+	}
 }
 
 func (s *server) CopyReplica(replica *m.KeyValue) {

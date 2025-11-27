@@ -30,6 +30,11 @@ type Peer struct {
 
 	InMessagesChan  chan *pb.ServerMessage
 	OutMessagesChan chan *pb.ServerMessage
+
+	// Response channels for forwarding requests
+	getResponseChan chan *pb.ForwardGetResponse
+	setResponseChan chan *pb.ForwardSetResponse
+	responseMu      sync.Mutex
 }
 
 type IPeer interface {
@@ -105,6 +110,8 @@ func NewPeer(s IStream, client bool) *Peer {
 
 		InMessagesChan:  make(chan *pb.ServerMessage, 100),
 		OutMessagesChan: make(chan *pb.ServerMessage, 100),
+		getResponseChan: make(chan *pb.ForwardGetResponse, 1),
+		setResponseChan: make(chan *pb.ForwardSetResponse, 1),
 	}
 }
 
@@ -120,6 +127,8 @@ func NewPeerWithoutStream(host *string, p *int32, ts int64, status int) *Peer {
 
 		InMessagesChan:  make(chan *pb.ServerMessage, 100),
 		OutMessagesChan: make(chan *pb.ServerMessage, 100),
+		getResponseChan: make(chan *pb.ForwardGetResponse, 1),
+		setResponseChan: make(chan *pb.ForwardSetResponse, 1),
 	}
 }
 
@@ -286,6 +295,70 @@ func (p *Peer) processMessageLoop() {
 				Log.Info().Str("Key=", key).Str("value=", val).Send()
 				storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
+
+			case pb.MessageType_FORWARD_GET_REQUEST:
+				// Handle forwarded GET request from coordinator
+				key := msg.GetForwardGetRequest().GetKey()
+				Log.Info().Str("key", key).Msg("Received ForwardGetRequest")
+
+				kv := storage.Store.Get(key)
+				found := kv.Value != ""
+
+				response := &pb.ServerMessage{
+					Type: pb.MessageType_FORWARD_GET_RESPONSE,
+					Content: &pb.ServerMessage_ForwardGetResponse{
+						ForwardGetResponse: &pb.ForwardGetResponse{
+							Key:   key,
+							Value: kv.Value,
+							Found: found,
+						},
+					},
+				}
+				p.OutMessagesChan <- response
+
+			case pb.MessageType_FORWARD_SET_REQUEST:
+				// Handle forwarded SET request from coordinator
+				key := msg.GetForwardSetRequest().GetKey()
+				value := msg.GetForwardSetRequest().GetValue()
+				Log.Info().Str("key", key).Str("value", value).Msg("Received ForwardSetRequest")
+
+				storage.Store.Set(&models.KeyValue{Key: key, Value: value})
+
+				response := &pb.ServerMessage{
+					Type: pb.MessageType_FORWARD_SET_RESPONSE,
+					Content: &pb.ServerMessage_ForwardSetResponse{
+						ForwardSetResponse: &pb.ForwardSetResponse{
+							Success: true,
+							Error:   "",
+						},
+					},
+				}
+				p.OutMessagesChan <- response
+
+			case pb.MessageType_FORWARD_GET_RESPONSE:
+				// Route response to waiting ForwardGet call
+				Log.Debug().Msg("Received ForwardGetResponse")
+				resp := msg.GetForwardGetResponse()
+				select {
+				case p.getResponseChan <- resp:
+					// Response delivered
+				default:
+					// No one waiting, ignore
+					Log.Warn().Msg("ForwardGetResponse received but no one waiting")
+				}
+
+			case pb.MessageType_FORWARD_SET_RESPONSE:
+				// Route response to waiting ForwardSet call
+				Log.Debug().Msg("Received ForwardSetResponse")
+				resp := msg.GetForwardSetResponse()
+				select {
+				case p.setResponseChan <- resp:
+					// Response delivered
+				default:
+					// No one waiting, ignore
+					Log.Warn().Msg("ForwardSetResponse received but no one waiting")
+				}
+
 			case pb.MessageType_PING_RESPONSE:
 
 				// no op for now

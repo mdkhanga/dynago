@@ -34,6 +34,30 @@ enum MessageType {
   KEY_VALUE = 2;
   CLUSTER_INFO_REQUEST = 3;
   CLUSTER_INFO_RESPONSE = 4;
+  FORWARD_GET_REQUEST = 5;
+  FORWARD_GET_RESPONSE = 6;
+  FORWARD_SET_REQUEST = 7;
+  FORWARD_SET_RESPONSE = 8;
+}
+
+message ForwardGetRequest {
+  string key = 1;
+}
+
+message ForwardGetResponse {
+  string key = 1;
+  string value = 2;
+  bool found = 3;
+}
+
+message ForwardSetRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message ForwardSetResponse {
+  bool success = 1;
+  string error = 2;
 }
 
 message ServerMessage {
@@ -44,6 +68,10 @@ message ServerMessage {
     KeyValueMessage key_value = 4;
     ClusterInfoRequest cluster_info_request = 5;
     ClusterInfoResponse cluster_info_reponse = 6;
+    ForwardGetRequest forward_get_request = 7;
+    ForwardGetResponse forward_get_response = 8;
+    ForwardSetRequest forward_set_request = 9;
+    ForwardSetResponse forward_set_response = 10;
   }
 }
 
