@@ -4,16 +4,16 @@ A distributed key value store like Dynamo or Cassandra written in Go.
 The inspiration comes from the Amazon Dynamo paper.  
 https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
 
-Plan:  
-Key value store  
+Current features :  
+In memory Key value store  
 Cluster - no leader all servers equal  
+Gossip
 Partitioning using consistent hashing  
-Quorum based read / write  
-Storage   TBD  
-Gossip  
-etc      
-
-WORK IN PROGRESS. SEE THE LAST SECTION FOR LATEST STATUS.
+ 
+In plan/ coming soon:
+Quorum based read/write
+Storage
+Replication
 
 ## Usage
 
@@ -54,13 +54,19 @@ curl -X POST -H "Content-type:application/json" -d '{"Key": "Name", "Value":"som
 
 curl http://ip_addr:8080/kvstore/Name
 
-At the point, replication is being implemented and not yet working. So you need to connect to same server to retrieve values
+You can read any key from any node.
 
 ## Status 
 
 ### What is currently working ?
 
 1. You can create a leader less peer to peer cluster by starting servers as described above. Except first server, the others need to point to another with the --seed option.
+
+2. Set and Get Key values
+
+Connect to any node and set key/value as shown above.
+
+3. Distribution of keys across the nodes of the cluster using consistent hashing.
 
 ### Next up 
 
