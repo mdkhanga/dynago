@@ -188,10 +188,7 @@ func (p *Peer) sendLoop() {
 		}
 
 		select {
-		/* case <-ctx.Done():
-		Log.Info().Msg("Client disconnected or context canceled (sender)")
-		p.Stop()
-		return */
+
 		case <-p.stopChan:
 			Log.Info().Msg("Stop signal received for sender goroutine")
 			return
