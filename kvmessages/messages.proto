@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package kvmessages ;
 
-option go_package = "github.com/kvstore/kvmessages";
+option go_package = "github.com/mdkhanga/dynago/kvmessages";
 
 // The greeting service definition.
 service KVSevice {
