@@ -1,9 +1,14 @@
-.classpath
-.project
-.settings
-.idea
-target
-build
+# Build output
+/dynago
+*.test
+*.out
+coverage.*
+
+# Logs
+*.log
+
+# Editors / OS
+.idea/
+.vscode/
 *.iml
-*.class
-.gradle
+.DS_Store
