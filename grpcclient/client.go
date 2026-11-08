@@ -65,29 +65,3 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 	}
 
 }
-
-func CallPeer(myhost *string, myport *int32, seedHostport *string, p cluster.IPeer) (grpc.BidiStreamingClient[pb.ServerMessage, pb.ServerMessage], error) {
-
-	conn, err := grpc.NewClient(*seedHostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		Log.Error().AnErr("did not connect:", err).Send()
-		return nil, err
-	}
-	defer conn.Close()
-
-	c := pb.NewKVSeviceClient(conn)
-	ctx := context.Background()
-
-	Log.Debug().Msg("Create KVclient")
-
-	stream, err := c.Communicate(ctx)
-	if err != nil {
-		Log.Error().Msg("Error getting bidirectinal strem")
-		conn.Close()
-		return nil, err
-
-	}
-
-	return stream, nil
-
-}

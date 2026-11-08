@@ -1,0 +1,277 @@
+{"level":"info","time":"2025-11-16T17:48:11-08:00","message":"Welcome to key value store"}
+{"level":"debug","Seed to connect to ":"","time":"2025-11-16T17:48:11-08:00"}
+{"level":"info","Going to listen on http port ":"8082","time":"2025-11-16T17:48:11-08:00"}
+{"level":"info","component":"server","time":"2025-11-16T17:48:11-08:00","message":"Starting Dynago server "}
+{"level":"info","component":"server","Listening http":"localhost:8082","time":"2025-11-16T17:48:11-08:00"}
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /ping                     --> github.com/mdkhanga/dynago/server.(*server).startGinServer.func1 (3 handlers)
+[GIN-debug] GET    /kvstore                  --> github.com/mdkhanga/dynago/server.getInfo (3 handlers)
+[GIN-debug] GET    /kvstore/:key             --> github.com/mdkhanga/dynago/server.(*server).getValue-fm (3 handlers)
+[GIN-debug] POST   /kvstore                  --> github.com/mdkhanga/dynago/server.(*server).setValue-fm (3 handlers)
+[GIN-debug] GET    /members                  --> github.com/mdkhanga/dynago/server.(*server).getMembers-fm (3 handlers)
+{"level":"info","component":"server","Starting server at %s\n":"localhost:8082","time":"2025-11-16T17:48:11-08:00"}
+{"level":"info","component":"server","GRPC server listening at ":"127.0.0.1:8081","time":"2025-11-16T17:48:11-08:00"}
+{"level":"info","time":"2025-11-16T17:48:13-08:00","message":"Welcome to key value store"}
+{"level":"debug","Seed to connect to ":"localhost:8081","time":"2025-11-16T17:48:13-08:00"}
+{"level":"info","Going to listen on http port ":"8086","time":"2025-11-16T17:48:13-08:00"}
+{"level":"info","component":"server","time":"2025-11-16T17:48:13-08:00","message":"Starting Dynago server "}
+{"level":"info","component":"server","Listening http":"localhost:8086","time":"2025-11-16T17:48:13-08:00"}
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /ping                     --> github.com/mdkhanga/dynago/server.(*server).startGinServer.func1 (3 handlers)
+[GIN-debug] GET    /kvstore                  --> github.com/mdkhanga/dynago/server.getInfo (3 handlers)
+[GIN-debug] GET    /kvstore/:key             --> github.com/mdkhanga/dynago/server.(*server).getValue-fm (3 handlers)
+[GIN-debug] POST   /kvstore                  --> github.com/mdkhanga/dynago/server.(*server).setValue-fm (3 handlers)
+[GIN-debug] GET    /members                  --> github.com/mdkhanga/dynago/server.(*server).getMembers-fm (3 handlers)
+{"level":"info","component":"server","Starting server at %s\n":"localhost:8086","time":"2025-11-16T17:48:13-08:00"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:13-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:13-08:00","message":"Create KVclient"}
+{"level":"info","component":"server","GRPC server listening at ":"127.0.0.1:8085","time":"2025-11-16T17:48:13-08:00"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:13-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:13-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:13-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:13-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","Hostname":"localhost","Port":8085,"time":"2025-11-16T17:48:14-08:00","message":"Added new server to Cluster"}
+{"level":"info","time":"2025-11-16T17:48:15-08:00","message":"Welcome to key value store"}
+{"level":"debug","Seed to connect to ":"localhost:8085","time":"2025-11-16T17:48:15-08:00"}
+{"level":"info","Going to listen on http port ":"8088","time":"2025-11-16T17:48:15-08:00"}
+{"level":"info","component":"server","time":"2025-11-16T17:48:15-08:00","message":"Starting Dynago server "}
+{"level":"info","component":"server","Listening http":"localhost:8088","time":"2025-11-16T17:48:15-08:00"}
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /ping                     --> github.com/mdkhanga/dynago/server.(*server).startGinServer.func1 (3 handlers)
+[GIN-debug] GET    /kvstore                  --> github.com/mdkhanga/dynago/server.getInfo (3 handlers)
+[GIN-debug] GET    /kvstore/:key             --> github.com/mdkhanga/dynago/server.(*server).getValue-fm (3 handlers)
+[GIN-debug] POST   /kvstore                  --> github.com/mdkhanga/dynago/server.(*server).setValue-fm (3 handlers)
+[GIN-debug] GET    /members                  --> github.com/mdkhanga/dynago/server.(*server).getMembers-fm (3 handlers)
+{"level":"info","component":"server","Starting server at %s\n":"localhost:8088","time":"2025-11-16T17:48:15-08:00"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:15-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:15-08:00","message":"Create KVclient"}
+{"level":"info","component":"server","GRPC server listening at ":"127.0.0.1:8087","time":"2025-11-16T17:48:15-08:00"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:15-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:15-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:15-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:15-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","Hostname":"localhost","Port":8087,"time":"2025-11-16T17:48:16-08:00","message":"Added new server to Cluster"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8081,"time":"2025-11-16T17:48:17-08:00"}
+{"level":"info","time":"2025-11-16T17:48:17-08:00","message":"Welcome to key value store"}
+{"level":"debug","Seed to connect to ":"localhost:8087","time":"2025-11-16T17:48:17-08:00"}
+{"level":"info","Going to listen on http port ":"8090","time":"2025-11-16T17:48:17-08:00"}
+{"level":"info","component":"server","time":"2025-11-16T17:48:17-08:00","message":"Starting Dynago server "}
+{"level":"info","component":"server","Listening http":"localhost:8090","time":"2025-11-16T17:48:17-08:00"}
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /ping                     --> github.com/mdkhanga/dynago/server.(*server).startGinServer.func1 (3 handlers)
+[GIN-debug] GET    /kvstore                  --> github.com/mdkhanga/dynago/server.getInfo (3 handlers)
+[GIN-debug] GET    /kvstore/:key             --> github.com/mdkhanga/dynago/server.(*server).getValue-fm (3 handlers)
+[GIN-debug] POST   /kvstore                  --> github.com/mdkhanga/dynago/server.(*server).setValue-fm (3 handlers)
+[GIN-debug] GET    /members                  --> github.com/mdkhanga/dynago/server.(*server).getMembers-fm (3 handlers)
+{"level":"info","component":"server","Starting server at %s\n":"localhost:8090","time":"2025-11-16T17:48:17-08:00"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:17-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:48:17-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8087,"time":"2025-11-16T17:48:17-08:00"}
+{"level":"info","component":"server","GRPC server listening at ":"127.0.0.1:8089","time":"2025-11-16T17:48:17-08:00"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:17-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8081","time":"2025-11-16T17:48:17-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:17-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:17-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8087","time":"2025-11-16T17:48:18-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:18-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:18-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:18-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:18-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:18-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","Hostname":"localhost","Port":8089,"time":"2025-11-16T17:48:18-08:00","message":"Added new server to Cluster"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8089,"time":"2025-11-16T17:48:19-08:00"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8089,"time":"2025-11-16T17:48:19-08:00"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8081,"time":"2025-11-16T17:48:19-08:00"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8085,"time":"2025-11-16T17:48:19-08:00"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8085","time":"2025-11-16T17:48:20-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:20-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8081","time":"2025-11-16T17:48:20-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:20-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8089","time":"2025-11-16T17:48:20-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:20-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8089","time":"2025-11-16T17:48:20-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:48:20-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:20-08:00","message":"Peer already connected"}
+[GIN] 2025/11/16 - 17:48:39 | 200 |     157.666µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:48:39 | 200 |         478µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:48:39 | 200 |      20.292µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:48:39 | 200 |      18.875µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:48:39 | 200 |      14.667µs |       127.0.0.1 | GET      "/members"
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:48:39-08:00","message":"Stop signal received for sender goroutine"}
+[GIN] 2025/11/16 - 17:49:21 | 200 |     145.542µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:49:21 | 200 |      26.125µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:49:21 | 200 |      60.208µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:49:21 | 200 |      88.833µs |       127.0.0.1 | GET      "/members"
+{"level":"info","time":"2025-11-16T17:49:21-08:00","message":"Welcome to key value store"}
+{"level":"debug","Seed to connect to ":"localhost:8087","time":"2025-11-16T17:49:21-08:00"}
+{"level":"info","Going to listen on http port ":"8090","time":"2025-11-16T17:49:21-08:00"}
+{"level":"info","component":"server","time":"2025-11-16T17:49:21-08:00","message":"Starting Dynago server "}
+{"level":"info","component":"server","Listening http":"localhost:8090","time":"2025-11-16T17:49:21-08:00"}
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /ping                     --> github.com/mdkhanga/dynago/server.(*server).startGinServer.func1 (3 handlers)
+[GIN-debug] GET    /kvstore                  --> github.com/mdkhanga/dynago/server.getInfo (3 handlers)
+[GIN-debug] GET    /kvstore/:key             --> github.com/mdkhanga/dynago/server.(*server).getValue-fm (3 handlers)
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:49:21-08:00","message":" Calling grpc server"}
+[GIN-debug] POST   /kvstore                  --> github.com/mdkhanga/dynago/server.(*server).setValue-fm (3 handlers)
+[GIN-debug] GET    /members                  --> github.com/mdkhanga/dynago/server.(*server).getMembers-fm (3 handlers)
+{"level":"info","component":"server","Starting server at %s\n":"localhost:8090","time":"2025-11-16T17:49:21-08:00"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:49:21-08:00","message":"Create KVclient"}
+{"level":"info","component":"server","GRPC server listening at ":"127.0.0.1:8089","time":"2025-11-16T17:49:21-08:00"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:21-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:21-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:49:21-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:21-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8085,"time":"2025-11-16T17:49:23-08:00"}
+{"level":"info","component":"cluster","No connection we need to call connect for":8081,"time":"2025-11-16T17:49:23-08:00"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8085","time":"2025-11-16T17:49:23-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:49:23-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:49:24-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Peer already connected"}
+{"level":"info","component":"cluster"," Calling grpc server":"localhost:8081","time":"2025-11-16T17:49:24-08:00"}
+{"level":"debug","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Create KVclient"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Connection established ... exiting connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Starting the ping loop"}
+{"level":"info","component":"grpcserver","time":"2025-11-16T17:49:24-08:00","message":"Server received a request to connect"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:49:24-08:00","message":"Peer already connected"}
+[GIN] 2025/11/16 - 17:50:03 | 200 |     104.667µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:50:03 | 200 |     307.792µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:50:03 | 200 |      74.125µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:50:03 | 200 |      103.25µs |       127.0.0.1 | GET      "/members"
+[GIN] 2025/11/16 - 17:50:03 | 200 |          78µs |       127.0.0.1 | GET      "/members"
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:03-08:00","message":"Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:03-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:03-08:00","message":"Sleep for 5 sec and try again"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:08-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:08-08:00","message":"Create KVclient"}
+{"level":"error","component":"grpcclient","time":"2025-11-16T17:50:08-08:00","message":"Error getting bidirectinal strem"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:08-08:00","message":"Sleep for 5 sec and try again"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:13-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:13-08:00","message":"Create KVclient"}
+{"level":"error","component":"grpcclient","time":"2025-11-16T17:50:14-08:00","message":"Error getting bidirectinal strem"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:14-08:00","message":"Sleep for 5 sec and try again"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:19-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:19-08:00","message":"Create KVclient"}
+{"level":"error","component":"grpcclient","time":"2025-11-16T17:50:19-08:00","message":"Error getting bidirectinal strem"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:19-08:00","message":"Sleep for 5 sec and try again"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:24-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:24-08:00","message":"Create KVclient"}
+{"level":"error","component":"grpcclient","time":"2025-11-16T17:50:24-08:00","message":"Error getting bidirectinal strem"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:24-08:00","message":"Sleep for 5 sec and try again"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:29-08:00","message":" Calling grpc server"}
+{"level":"debug","component":"grpcclient","time":"2025-11-16T17:50:29-08:00","message":"Create KVclient"}
+{"level":"error","component":"grpcclient","time":"2025-11-16T17:50:29-08:00","message":"Error getting bidirectinal strem"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:29-08:00","message":"Sleep for 5 sec and try again"}
+[GIN] 2025/11/16 - 17:50:30 | 200 |       74.75µs |       127.0.0.1 | GET      "/members"
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:30-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:32-08:00","message":"Unable to read from the stream. server seems unavailable"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:32-08:00","message":"Init Stopping message processing due to stream error"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:32-08:00","message":"Stopping message processing due to stream error"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:32-08:00","message":"Stop signal received for processing goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:32-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"cluster","time":"2025-11-16T17:50:32-08:00","message":"Stop signal received for sender goroutine"}
+{"level":"info","component":"grpcclient","time":"2025-11-16T17:50:32-08:00","message":"Sleep for 5 sec and try again"}
+Started ABCD
+{'localhost:8085', 'localhost:8081', 'localhost:8089', 'localhost:8087'}
+{'localhost:8085', 'localhost:8089', 'localhost:8087', 'localhost:8081'}
+Stopped D. Waiting for cluster info to propagate
+{'localhost:8085', 'localhost:8081', 'localhost:8087'}
+{'localhost:8085', 'localhost:8081', 'localhost:8087'}
+Restarted the server. Waiting for cluster info to propagate
+{'localhost:8085', 'localhost:8081', 'localhost:8089', 'localhost:8087'}
+{'localhost:8085', 'localhost:8081', 'localhost:8089', 'localhost:8087'}
+Stopped B. Waiting for cluster info to propagate
