@@ -23,12 +23,16 @@ run:
 	./$(BINARY_NAME)
 
 test:
-	ginkgo -r
+	ginkgo -r --skip-package=e2e
+
+# End-to-end tests: build the binary and run real multi-node clusters
+e2e:
+	$(GOTEST) -tags e2e -count=1 -v ./e2e/...
 
 deps:
 	$(GOGET) github.com/example/dependency
 
-.PHONY: all build clean run test deps
+.PHONY: all build clean run test e2e deps
 
 proto: 
 	protoc --go_out=. --go_opt=paths=source_relative \
