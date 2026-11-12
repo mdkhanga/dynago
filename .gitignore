@@ -9,6 +9,7 @@ coverage.*
 
 # Editors / OS
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.iml
 .DS_Store
