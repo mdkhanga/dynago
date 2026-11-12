@@ -97,19 +97,25 @@ func (n *Node) Members() ([]string, error) {
 	return members, nil
 }
 
-// Set stores a key/value through the node's HTTP API.
-func (n *Node) Set(key, value string) error {
+// Set stores a key/value through the node's HTTP API and returns the owner
+// node that stored it, as reported in the response.
+func (n *Node) Set(key, value string) (string, error) {
 	body, _ := json.Marshal(map[string]string{"Key": key, "Value": value})
 	resp, err := httpClient.Post(n.url("/kvstore"), "application/json", bytes.NewReader(body))
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("set %q via %s: status %d", key, n.Name, resp.StatusCode)
+		return "", fmt.Errorf("set %q via %s: status %d", key, n.Name, resp.StatusCode)
 	}
-	return nil
+
+	var result struct {
+		Node string `json:"node"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return result.Node, err
 }
 
 // GetResult is the JSON returned by GET /kvstore/:key.
