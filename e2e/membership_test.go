@@ -55,4 +55,32 @@ var _ = Describe("Cluster membership", func() {
 		By("waiting for all nodes to see A, B and C again")
 		expectMembers(convergeTimeout, []*Node{a, b, c}, a, b, c)
 	})
+
+	It("keeps a chain-seeded cluster connected when a middle node leaves", func() {
+		By("starting A, then B seeded from A, C from B, D from C")
+		a := StartNode("A", nil)
+		b := StartNode("B", a)
+		c := StartNode("C", b)
+		d := StartNode("D", c)
+		all := []*Node{a, b, c, d}
+
+		By("waiting for all nodes to see A, B, C and D")
+		expectMembers(convergeTimeout, all, a, b, c, d)
+
+		By("stopping D, the end of the chain")
+		d.Stop()
+		expectMembers(failureTimeout, []*Node{a, b, c}, a, b, c)
+
+		By("restarting D seeded from C")
+		d.Start()
+		expectMembers(convergeTimeout, all, a, b, c, d)
+
+		By("stopping B, the middle of the chain and C's seed")
+		b.Stop()
+		expectMembers(failureTimeout, []*Node{a, c, d}, a, c, d)
+
+		By("restarting B seeded from A")
+		b.Start()
+		expectMembers(convergeTimeout, all, a, b, c, d)
+	})
 })
