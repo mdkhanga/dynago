@@ -28,16 +28,14 @@ Generates Go code and gRPC stubs from `kvmessages/messages.proto`. Required afte
 
 ### Run Tests
 ```bash
-make test              # ginkgo -r
+make test              # unit tests: ginkgo -r --skip-package=e2e
 go test -race ./...    # same unit tests, with the race detector
+make e2e               # end-to-end tests (~3 min)
 ```
 
 Unit tests use Ginkgo v2 and Gomega and live next to the code (`cluster/`, `storage/`).
 
-End-to-end tests are Python scripts in `e2e-tests/` that launch `./dynago` processes on localhost and drive them over HTTP. Build the binary first, then run from the repo root (requires the `requests` package):
-```bash
-python3 e2e-tests/test_key_distribution.py
-```
+End-to-end tests live in `e2e/` behind the `e2e` build tag. They build the `dynago` binary, start real nodes as subprocesses on free localhost ports, and drive them over HTTP, polling with `Eventually` until gossip converges. Specs that cover known bugs are marked pending (`PIt`) until the fix lands. `.vscode/settings.json` sets `-tags=e2e` so gopls can navigate these files.
 
 ### Running Servers
 
