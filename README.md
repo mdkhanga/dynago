@@ -18,7 +18,8 @@ Not yet implemented:
 - Durable storage, deletes
 
 Known issue: nodes can disagree on a key's owner, because peers learned through
-gossip are not added to the hash ring.
+gossip are not added to the hash ring. The fix is part of Phase 1 in
+[docs/PLAN.md](docs/PLAN.md).
 
 ## Prerequisites
 
