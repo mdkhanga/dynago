@@ -22,10 +22,10 @@ const (
 // HashRing represents the consistent hash ring
 type HashRing struct {
 	mu           sync.RWMutex
-	ring         []uint32           // Sorted array of hash values
-	nodeMap      map[uint32]string  // Maps hash value to node ID
-	nodes        map[string]bool    // Set of all physical nodes
-	virtualNodes int                // Number of virtual nodes per physical node
+	ring         []uint32          // Sorted array of hash values
+	nodeMap      map[uint32]string // Maps hash value to node ID
+	nodes        map[string]bool   // Set of all physical nodes
+	virtualNodes int               // Number of virtual nodes per physical node
 }
 
 // NewHashRing creates a new hash ring with specified number of virtual nodes
