@@ -1,78 +1,89 @@
 # dynago
-A distributed key value store like Dynamo or Cassandra written in Go.
 
-The inspiration comes from the Amazon Dynamo paper.  
-https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
+A distributed key-value store in Go, inspired by the
+[Amazon Dynamo paper](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf).
 
-Current features :  
-In memory Key value store  
-Cluster - no leader all servers equal  
-Gossip
-Partitioning using consistent hashing  
- 
-In plan/ coming soon:
-Quorum based read/write
-Storage
-Replication
+## Status
 
-## Usage
+Working today:
+- Leaderless peer-to-peer cluster: every node is equal; new nodes join through any existing node (a seed)
+- Membership via gossip, with failed nodes dropped after ~15 seconds
+- Partitioning with consistent hashing (150 virtual nodes per server)
+- In-memory get/set from any node; requests are forwarded to the key's owner
 
-### Building the code
+Not yet implemented:
+- Replication (each key is stored on exactly one node)
+- Read/write quorums, versioning and conflict resolution
+- Hinted handoff, read repair, anti-entropy
+- Durable storage, deletes
 
-make
+Known issue: nodes can disagree on a key's owner, because peers learned through
+gossip are not added to the hash ring.
 
-### Start a server
+## Prerequisites
 
-./dynago -i ip_addr_to_bind_to
+- Go 1.24+
+- `protoc` with `protoc-gen-go` and `protoc-gen-go-grpc` (only needed to regenerate protobuf code)
+- The Ginkgo CLI for unit tests: `go install github.com/onsi/ginkgo/v2/ginkgo@latest`
 
--i ip address to bind server to
+## Build
 
-### Start a second server
+```bash
+make          # regenerate protobuf code and build ./dynago
+go build .    # build without regenerating protobuf code
+```
 
-./dynago -i ip_addr -p 8085 -h 8086 -seed ip_addr_of_seed:8081
+## Run a cluster
 
--i ip address to bind server to
--p grpc port for server to server communication
--h http port for client communication (default 8080)
--seed another server to connect to
+Start the first server:
+```bash
+./dynago -i localhost
+```
 
-### Start a third server
+Start more servers, pointing each at any existing server with `-seed`:
+```bash
+./dynago -i localhost -p 8085 -h 8086 -seed localhost:8081
+./dynago -i localhost -p 8087 -h 8088 -seed localhost:8081
+```
 
-./dynago -i ip_addr -p 8087 -h 8088 -seed ip_addr_of_seed:8081
+| Flag | Meaning | Default |
+|---|---|---|
+| `-i` | IP address or hostname to bind to | `localhost` |
+| `-p` | gRPC port for server-to-server traffic | `8081` |
+| `-h` | HTTP port for clients | `8080` |
+| `-seed` | `host:port` (gRPC port) of a server already in the cluster | none |
 
-### Get the list of members in the cluster
+## Use it
 
-curl http://ip_addr:httpport/members
+Every request can go to any server.
 
-The request can be sent to any of the servers
+```bash
+# List cluster members
+curl http://localhost:8080/members
 
-### Store a Key/Value 
+# Store a key/value
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"Key": "Name", "Value": "somevalue"}' \
+     http://localhost:8080/kvstore
 
-curl -X POST -H "Content-type:application/json" -d '{"Key": "Name", "Value":"somevalue"}' http://ip_addr:8080/kvstore
+# Read it back (from any server)
+curl http://localhost:8086/kvstore/Name
+```
 
-### Retrieve a the above value
+Writes and reads return the node that owns the key, e.g.
+`{"key":"Name","node":"localhost:8085","value":"somevalue"}`.
 
-curl http://ip_addr:8080/kvstore/Name
+## Tests
 
-You can read any key from any node.
+```bash
+make test              # unit tests (Ginkgo)
+go test -race ./...    # unit tests with the race detector
+make e2e               # end-to-end tests: real multi-node clusters, ~3 minutes
+```
 
-## Status 
+The end-to-end tests in `e2e/` build the binary and start real nodes as separate
+processes on free ports. Specs for known bugs are marked pending until they are fixed.
 
-### What is currently working ?
+## License
 
-1. You can create a leader less peer to peer cluster by starting servers as described above. Except first server, the others need to point to another with the --seed option.
-
-2. Set and Get Key values
-
-Connect to any node and set key/value as shown above.
-
-3. Distribution of keys across the nodes of the cluster using consistent hashing.
-
-### Next up 
-
-Uniform distribution of keys using consistent hashing.   
-
-We have a dynamic leaderless cluster to which you can add or remove servers.   
-With consistent hashing, we have a scalable in-memory key value store.
-
-
+Apache 2.0 — see [LICENSE](LICENSE).
