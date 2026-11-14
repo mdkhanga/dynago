@@ -3,7 +3,7 @@
 Where dynago is going, in order. Each step lands as one or more small commits,
 with unit tests (`go test -race`) and end-to-end tests (`make e2e`) passing.
 
-## Phase 0: Hygiene — almost done
+## Phase 0: Hygiene — done
 
 - [x] Go 1.24 toolchain
 - [x] Remove dead code (old TCP implementation)
@@ -11,7 +11,7 @@ with unit tests (`go test -race`) and end-to-end tests (`make e2e`) passing.
 - [x] `.gitignore`, protobuf `go_package`
 - [x] End-to-end tests ported from Python to Go/Ginkgo (`make e2e`)
 - [x] CLAUDE.md, README
-- [ ] CI: run `make test` and `make e2e` on every push
+- [x] CI: unit tests (with -race) and `make e2e` on every push and pull request
 
 ## Phase 1: Foundation rebuild
 
