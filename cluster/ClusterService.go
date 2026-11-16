@@ -16,7 +16,6 @@ import (
 
 var (
 	ClusterService               = New()
-	HashRing                     = consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes)
 	Log                          = logger.WithComponent("cluster").Log
 	StopGossip     chan struct{} = make(chan struct{})
 	once           sync.Once
@@ -25,6 +24,7 @@ var (
 type cluster struct {
 	mu         sync.Mutex
 	clusterMap map[string]*Peer
+	ring       *consistenthash.HashRing
 }
 
 type IClusterService interface {
@@ -82,7 +82,7 @@ func (c *cluster) AddToCluster(m *Peer) error {
 
 	// Only add node to hash ring if it's new
 	if !existsInCluster {
-		HashRing.AddNode(key)
+		c.ring.AddNode(key)
 	}
 
 	return nil
@@ -101,7 +101,7 @@ func (c *cluster) RemoveFromCluster(Hostname string, port int32) error {
 	c.clusterMap[key].Status = 1
 
 	// Remove node from hash ring
-	HashRing.RemoveNode(key)
+	c.ring.RemoveNode(key)
 
 	return nil
 }
@@ -135,6 +135,7 @@ func New() IClusterService {
 	return &cluster{
 		mu:         sync.Mutex{},
 		clusterMap: make(map[string]*Peer),
+		ring:       consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes),
 	}
 }
 
@@ -329,7 +330,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 
 // GetNodeForKey returns the node ID (host:port) responsible for storing the given key
 func (c *cluster) GetNodeForKey(key string) (string, bool) {
-	return HashRing.GetNode(key)
+	return c.ring.GetNode(key)
 }
 
 // ForwardGet forwards a GET request to the specified node and waits for response
