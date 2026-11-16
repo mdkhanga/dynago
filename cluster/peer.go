@@ -10,7 +10,6 @@ import (
 	"github.com/mdkhanga/dynago/config"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/models"
-	"github.com/mdkhanga/dynago/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -290,7 +289,7 @@ func (p *Peer) processMessageLoop() {
 				key := msg.GetKeyValue().GetKey()
 				val := msg.GetKeyValue().GetValue()
 				Log.Info().Str("Key=", key).Str("value=", val).Send()
-				storage.Store.Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
+				ClusterService.Store().Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
 
 			case pb.MessageType_FORWARD_GET_REQUEST:
@@ -298,7 +297,7 @@ func (p *Peer) processMessageLoop() {
 				key := msg.GetForwardGetRequest().GetKey()
 				Log.Info().Str("key", key).Msg("Received ForwardGetRequest")
 
-				kv := storage.Store.Get(key)
+				kv := ClusterService.Store().Get(key)
 				found := kv.Value != ""
 
 				response := &pb.ServerMessage{
@@ -319,7 +318,7 @@ func (p *Peer) processMessageLoop() {
 				value := msg.GetForwardSetRequest().GetValue()
 				Log.Info().Str("key", key).Str("value", value).Msg("Received ForwardSetRequest")
 
-				storage.Store.Set(&models.KeyValue{Key: key, Value: value})
+				ClusterService.Store().Set(&models.KeyValue{Key: key, Value: value})
 
 				response := &pb.ServerMessage{
 					Type: pb.MessageType_FORWARD_SET_RESPONSE,

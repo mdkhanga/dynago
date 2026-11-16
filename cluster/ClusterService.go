@@ -12,6 +12,7 @@ import (
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
 	"github.com/mdkhanga/dynago/models"
+	"github.com/mdkhanga/dynago/storage"
 )
 
 var (
@@ -25,6 +26,7 @@ type cluster struct {
 	mu         sync.Mutex
 	clusterMap map[string]*Peer
 	ring       *consistenthash.HashRing
+	store      *storage.MemoryStore
 }
 
 type IClusterService interface {
@@ -40,6 +42,7 @@ type IClusterService interface {
 	ForwardSet(nodeID string, key string, value string) error
 	Stop()
 	Start()
+	Store() *storage.MemoryStore
 }
 
 func (c *cluster) Start() {
@@ -136,7 +139,13 @@ func New() IClusterService {
 		mu:         sync.Mutex{},
 		clusterMap: make(map[string]*Peer),
 		ring:       consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes),
+		store:      storage.NewMemoryStore(),
 	}
+}
+
+// Store returns the node's local key-value store.
+func (c *cluster) Store() *storage.MemoryStore {
+	return c.store
 }
 
 func (c *cluster) ClusterInfoGossip() {

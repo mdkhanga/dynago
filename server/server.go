@@ -10,7 +10,6 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	"github.com/mdkhanga/dynago/config"
 	client "github.com/mdkhanga/dynago/grpcclient"
-	"github.com/mdkhanga/dynago/storage"
 
 	"github.com/mdkhanga/dynago/grpcserver"
 	pb "github.com/mdkhanga/dynago/kvmessages"
@@ -179,7 +178,7 @@ func (s *server) getValue(c *gin.Context) {
 	// Check if this is the correct node
 	if nodeID == localNodeID {
 		// Get locally
-		kv = storage.Store.Get(key)
+		kv = cluster.ClusterService.Store().Get(key)
 		Log.Info().Str("key", key).Str("value", kv.Value).Msg("Retrieved key locally")
 	} else {
 		// Forward to the correct node
@@ -224,7 +223,7 @@ func (s *server) setValue(c *gin.Context) {
 	// Check if this is the correct node
 	if nodeID == localNodeID {
 		// Store locally
-		storage.Store.Set(&input)
+		cluster.ClusterService.Store().Set(&input)
 		Log.Info().Str("key", input.Key).Msg("Stored key locally")
 		c.JSON(http.StatusOK, gin.H{"message": "Stored the key value", "node": nodeID})
 	} else {
@@ -241,7 +240,7 @@ func (s *server) setValue(c *gin.Context) {
 }
 
 func (s *server) CopyReplica(replica *m.KeyValue) {
-	storage.Store.Set(replica)
+	cluster.ClusterService.Store().Set(replica)
 }
 
 func (s *server) getMembers(c *gin.Context) {

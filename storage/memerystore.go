@@ -11,10 +11,6 @@ type MemoryStore struct {
 	mu    sync.Mutex
 }
 
-var (
-	Store = MemoryStore{kvMap: make(map[string]string), mu: sync.Mutex{}}
-)
-
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		kvMap: make(map[string]string),
