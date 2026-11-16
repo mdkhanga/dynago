@@ -17,6 +17,7 @@ import (
 type Peer struct {
 	Host      *string
 	Port      *int32
+	cluster   IClusterService
 	stream    IStream
 	conn      *grpc.ClientConn
 	Timestamp int64
@@ -98,9 +99,10 @@ func (p *Peer) Stop() {
 	p.close()
 }
 
-func NewPeer(s IStream, client bool) *Peer {
+func NewPeer(c IClusterService, s IStream, client bool) *Peer {
 
 	return &Peer{
+		cluster:   c,
 		stream:    s,
 		stopChan:  make(chan struct{}),
 		once:      sync.Once{},
@@ -114,8 +116,9 @@ func NewPeer(s IStream, client bool) *Peer {
 	}
 }
 
-func NewPeerWithoutStream(host *string, p *int32, ts int64, status int) *Peer {
+func NewPeerWithoutStream(c IClusterService, host *string, p *int32, ts int64, status int) *Peer {
 	return &Peer{
+		cluster:   c,
 		Host:      host,
 		Port:      p,
 		Timestamp: ts,
@@ -236,7 +239,7 @@ func (p *Peer) processMessageLoop() {
 					},
 				}
 
-				exists, _ := ClusterService.Exists(host, port)
+				exists, _ := p.cluster.Exists(host, port)
 
 				if !exists {
 
@@ -245,7 +248,7 @@ func (p *Peer) processMessageLoop() {
 					p.Timestamp = time.Now().UnixMilli()
 					p.Mine = false
 
-					ClusterService.AddToCluster(p)
+					p.cluster.AddToCluster(p)
 					Log.Info().Str("Hostname", host).
 						Int32("Port", port).
 						Msg("Added new server to Cluster")
@@ -261,7 +264,7 @@ func (p *Peer) processMessageLoop() {
 					}
 
 					p.Status = 0
-					ClusterService.AddToCluster(p)
+					p.cluster.AddToCluster(p)
 
 				}
 
@@ -269,7 +272,7 @@ func (p *Peer) processMessageLoop() {
 
 			case pb.MessageType_CLUSTER_INFO_REQUEST:
 
-				diff := ClusterService.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
+				diff := p.cluster.MergePeerLists(msg.GetClusterInfoRequest().GetCluster().GetMembers(), true)
 
 				cls := pb.Cluster{Members: diff}
 
@@ -282,14 +285,14 @@ func (p *Peer) processMessageLoop() {
 				p.OutMessagesChan <- &clsServerMsg
 
 			case pb.MessageType_CLUSTER_INFO_RESPONSE:
-				ClusterService.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().GetMembers(), false)
+				p.cluster.MergePeerLists(msg.GetClusterInfoReponse().GetCluster().GetMembers(), false)
 
 			case pb.MessageType_KEY_VALUE:
 				Log.Info().Msg("Received KeyValueMessage")
 				key := msg.GetKeyValue().GetKey()
 				val := msg.GetKeyValue().GetValue()
 				Log.Info().Str("Key=", key).Str("value=", val).Send()
-				ClusterService.Store().Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
+				p.cluster.Store().Set(&models.KeyValue{Key: msg.GetKeyValue().GetKey(), Value: msg.GetKeyValue().GetValue()})
 				// Handle KeyValueMessage
 
 			case pb.MessageType_FORWARD_GET_REQUEST:
@@ -297,7 +300,7 @@ func (p *Peer) processMessageLoop() {
 				key := msg.GetForwardGetRequest().GetKey()
 				Log.Info().Str("key", key).Msg("Received ForwardGetRequest")
 
-				kv := ClusterService.Store().Get(key)
+				kv := p.cluster.Store().Get(key)
 				found := kv.Value != ""
 
 				response := &pb.ServerMessage{
@@ -318,7 +321,7 @@ func (p *Peer) processMessageLoop() {
 				value := msg.GetForwardSetRequest().GetValue()
 				Log.Info().Str("key", key).Str("value", value).Msg("Received ForwardSetRequest")
 
-				ClusterService.Store().Set(&models.KeyValue{Key: key, Value: value})
+				p.cluster.Store().Set(&models.KeyValue{Key: key, Value: value})
 
 				response := &pb.ServerMessage{
 					Type: pb.MessageType_FORWARD_SET_RESPONSE,

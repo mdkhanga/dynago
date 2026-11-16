@@ -16,10 +16,7 @@ import (
 )
 
 var (
-	ClusterService               = New()
-	Log                          = logger.WithComponent("cluster").Log
-	StopGossip     chan struct{} = make(chan struct{})
-	once           sync.Once
+	Log = logger.WithComponent("cluster").Log
 )
 
 type cluster struct {
@@ -27,6 +24,8 @@ type cluster struct {
 	clusterMap map[string]*Peer
 	ring       *consistenthash.HashRing
 	store      *storage.MemoryStore
+	stopGossip chan struct{}
+	stopOnce   sync.Once
 }
 
 type IClusterService interface {
@@ -51,11 +50,9 @@ func (c *cluster) Start() {
 }
 
 func (c *cluster) Close() {
-	once.Do(func() {
+	c.stopOnce.Do(func() {
 		Log.Info().Msg("c close called")
-		if StopGossip != nil {
-			close(StopGossip)
-		}
+		close(c.stopGossip)
 	})
 
 }
@@ -133,13 +130,14 @@ func (c *cluster) Exists(hostname string, port int32) (bool, error) {
 	return true, nil
 }
 
-func New() IClusterService {
+func New(store *storage.MemoryStore) IClusterService {
 
 	return &cluster{
 		mu:         sync.Mutex{},
 		clusterMap: make(map[string]*Peer),
 		ring:       consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes),
-		store:      storage.NewMemoryStore(),
+		store:      store,
+		stopGossip: make(chan struct{}),
 	}
 }
 
@@ -155,7 +153,7 @@ func (c *cluster) ClusterInfoGossip() {
 	for {
 
 		select {
-		case <-StopGossip:
+		case <-c.stopGossip:
 			return
 		case <-time.After(1 * time.Second):
 
@@ -285,7 +283,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		} else {
 
 			// New peer
-			p := NewPeerWithoutStream(&m.Hostname, &m.Port, m.Timestamp, int(m.Status))
+			p := NewPeerWithoutStream(c, &m.Hostname, &m.Port, m.Timestamp, int(m.Status))
 
 			// Log.Info().Str("merged did not find key. need to call init and perhaps connect", key).Send()
 			c.clusterMap[key] = p

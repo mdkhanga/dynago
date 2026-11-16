@@ -10,6 +10,7 @@ import (
 	"github.com/mdkhanga/dynago/cluster"
 	"github.com/mdkhanga/dynago/config"
 	client "github.com/mdkhanga/dynago/grpcclient"
+	"github.com/mdkhanga/dynago/storage"
 
 	"github.com/mdkhanga/dynago/grpcserver"
 	pb "github.com/mdkhanga/dynago/kvmessages"
@@ -30,6 +31,8 @@ type server struct {
 	httpServer   *http.Server
 	grpcServer   *grpc.Server
 	grpcListener net.Listener
+	store        *storage.MemoryStore
+	cluster      cluster.IClusterService
 }
 
 type IServer interface {
@@ -41,7 +44,9 @@ type IServer interface {
 
 func New(host string, grpcport int32, httpPort int32, seed string) IServer {
 
-	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed}
+	store := storage.NewMemoryStore()
+	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed,
+		store: store, cluster: cluster.New(store)}
 }
 
 func (s *server) Start() {
@@ -50,14 +55,14 @@ func (s *server) Start() {
 
 	config.Init(s.Host, s.GrpcPort, s.HttpPort)
 
-	cluster.ClusterService.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true, Clientend: false})
+	s.cluster.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true, Clientend: false})
 
-	cluster.ClusterService.Start()
+	s.cluster.Start()
 
 	go s.startGrpcServer(&s.Host, &s.GrpcPort)
 
 	if s.Seed != "" {
-		go client.CallGrpcServer(&s.Host, &s.GrpcPort, &s.Seed)
+		go client.CallGrpcServer(s.cluster, &s.Host, &s.GrpcPort, &s.Seed)
 	}
 
 	rbind := fmt.Sprintf("%s:%d", s.Host, s.HttpPort)
@@ -69,7 +74,7 @@ func (s *server) Start() {
 func (s *server) Stop() {
 
 	Log.Info().Msg("shutting down cluster")
-	cluster.ClusterService.Stop()
+	s.cluster.Stop()
 	time.Sleep(5 * time.Second)
 	s.stopGinServer()
 	s.stopGrpcServer()
@@ -128,7 +133,7 @@ func (s *server) startGrpcServer(hostPtr *string, portPtr *int32) {
 	}
 
 	s.grpcServer = grpc.NewServer()
-	pb.RegisterKVSeviceServer(s.grpcServer, &grpcserver.Server{})
+	pb.RegisterKVSeviceServer(s.grpcServer, &grpcserver.Server{Cluster: s.cluster})
 	Log.Info().Any("GRPC server listening at ", s.grpcListener.Addr().String()).Send()
 	if err := s.grpcServer.Serve(s.grpcListener); err != nil {
 		Log.Error().AnErr("failed to serve: ", err).Send()
@@ -156,7 +161,7 @@ func (s *server) getValue(c *gin.Context) {
 	key := c.Param("key")
 
 	// Determine which node should have this key
-	nodeID, found := cluster.ClusterService.GetNodeForKey(key)
+	nodeID, found := s.cluster.GetNodeForKey(key)
 	if !found {
 		Log.Error().Str("key", key).Msg("No node found in hash ring")
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "No nodes available"})
@@ -178,12 +183,12 @@ func (s *server) getValue(c *gin.Context) {
 	// Check if this is the correct node
 	if nodeID == localNodeID {
 		// Get locally
-		kv = cluster.ClusterService.Store().Get(key)
+		kv = s.store.Get(key)
 		Log.Info().Str("key", key).Str("value", kv.Value).Msg("Retrieved key locally")
 	} else {
 		// Forward to the correct node
 		Log.Info().Str("key", key).Str("node", nodeID).Msg("Forwarding GET request to owner node")
-		kv, err = cluster.ClusterService.ForwardGet(nodeID, key)
+		kv, err = s.cluster.ForwardGet(nodeID, key)
 		if err != nil {
 			Log.Error().Err(err).Str("key", key).Str("node", nodeID).Msg("Failed to forward GET request")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -203,7 +208,7 @@ func (s *server) setValue(c *gin.Context) {
 	c.BindJSON(&input)
 
 	// Determine which node should store this key
-	nodeID, found := cluster.ClusterService.GetNodeForKey(input.Key)
+	nodeID, found := s.cluster.GetNodeForKey(input.Key)
 	if !found {
 		Log.Error().Str("key", input.Key).Msg("No node found in hash ring")
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "No nodes available"})
@@ -223,13 +228,13 @@ func (s *server) setValue(c *gin.Context) {
 	// Check if this is the correct node
 	if nodeID == localNodeID {
 		// Store locally
-		cluster.ClusterService.Store().Set(&input)
+		s.store.Set(&input)
 		Log.Info().Str("key", input.Key).Msg("Stored key locally")
 		c.JSON(http.StatusOK, gin.H{"message": "Stored the key value", "node": nodeID})
 	} else {
 		// Forward to the correct node
 		Log.Info().Str("key", input.Key).Str("node", nodeID).Msg("Forwarding SET request to owner node")
-		err := cluster.ClusterService.ForwardSet(nodeID, input.Key, input.Value)
+		err := s.cluster.ForwardSet(nodeID, input.Key, input.Value)
 		if err != nil {
 			Log.Error().Err(err).Str("key", input.Key).Str("node", nodeID).Msg("Failed to forward SET request")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -240,7 +245,7 @@ func (s *server) setValue(c *gin.Context) {
 }
 
 func (s *server) CopyReplica(replica *m.KeyValue) {
-	cluster.ClusterService.Store().Set(replica)
+	s.store.Set(replica)
 }
 
 func (s *server) getMembers(c *gin.Context) {
@@ -252,7 +257,7 @@ func (s *server) getMembers(c *gin.Context) {
 
 func (s *server) GetPeerList() []string {
 
-	peers, _ := cluster.ClusterService.ListCluster()
+	peers, _ := s.cluster.ListCluster()
 
 	var peerhostports []string
 

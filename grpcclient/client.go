@@ -16,7 +16,7 @@ var (
 	Log = logger.WithComponent("grpcclient").Log
 )
 
-func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
+func CallGrpcServer(c cluster.IClusterService, myhost *string, myport *int32, seedHostport *string) error {
 
 	for {
 
@@ -31,12 +31,12 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 		}
 		defer conn.Close()
 
-		c := pb.NewKVSeviceClient(conn)
+		kvClient := pb.NewKVSeviceClient(conn)
 		ctx := context.Background()
 
 		Log.Debug().Msg("Create KVclient")
 
-		stream, err := c.Communicate(ctx)
+		stream, err := kvClient.Communicate(ctx)
 		if err != nil {
 			Log.Error().Msg("Error getting bidirectinal strem")
 			conn.Close()
@@ -46,13 +46,13 @@ func CallGrpcServer(myhost *string, myport *int32, seedHostport *string) error {
 
 		}
 
-		p := cluster.NewPeer(&cluster.ClientStream{Stream: stream}, false)
+		p := cluster.NewPeer(c, &cluster.ClientStream{Stream: stream}, false)
 
 		host, port, _ := utils.ParseHostPort(*seedHostport)
 
 		p.Host = &host
 		p.Port = &port
-		cluster.ClusterService.AddToCluster(p)
+		c.AddToCluster(p)
 		p.Init()
 
 		// <-stopChan

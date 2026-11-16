@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/mdkhanga/dynago/cluster"
+	"github.com/mdkhanga/dynago/storage"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -20,7 +21,7 @@ var _ = Describe("ClusterService", func() {
 	)
 
 	BeforeEach(func() {
-		clusterService = cluster.New()
+		clusterService = cluster.New(storage.NewMemoryStore())
 		host1 = "192.168.1.10"
 		host2 = "192.168.1.11"
 		host3 = "192.168.1.12"

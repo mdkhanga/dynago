@@ -13,6 +13,7 @@ import (
 // server is used to implement helloworld.GreeterServer.
 type Server struct {
 	pb.UnimplementedKVSeviceServer
+	Cluster cluster.IClusterService
 }
 
 var (
@@ -35,7 +36,7 @@ func (s *Server) Communicate(stream pb.KVSevice_CommunicateServer) error {
 	Log.Info().Msg("Server received a request to connect")
 
 	// p := cluster.NewPeer(s)
-	p := cluster.NewPeer(&cluster.ServerStream{Stream: stream}, true)
+	p := cluster.NewPeer(s.Cluster, &cluster.ServerStream{Stream: stream}, true)
 
 	p.Init()
 
