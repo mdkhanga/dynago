@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mdkhanga/dynago/cluster"
-	"github.com/mdkhanga/dynago/config"
 	client "github.com/mdkhanga/dynago/grpcclient"
 	"github.com/mdkhanga/dynago/storage"
 
@@ -45,17 +44,14 @@ type IServer interface {
 func New(host string, grpcport int32, httpPort int32, seed string) IServer {
 
 	store := storage.NewMemoryStore()
+	self := &cluster.Peer{Host: &host, Port: &grpcport, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true, Clientend: false}
 	return &server{Host: host, HttpPort: httpPort, GrpcPort: grpcport, Seed: seed,
-		store: store, cluster: cluster.New(store)}
+		store: store, cluster: cluster.New(self, store)}
 }
 
 func (s *server) Start() {
 
 	Log.Info().Msg("Starting Dynago server ")
-
-	config.Init(s.Host, s.GrpcPort, s.HttpPort)
-
-	s.cluster.AddToCluster(&cluster.Peer{Host: &s.Host, Port: &s.GrpcPort, Timestamp: time.Now().UnixMilli(), Status: 0, Mine: true, Clientend: false})
 
 	s.cluster.Start()
 
@@ -168,8 +164,7 @@ func (s *server) getValue(c *gin.Context) {
 		return
 	}
 
-	cfg := config.GetConfig()
-	localNodeID := fmt.Sprintf("%s:%d", cfg.Hostname, cfg.GrpcPort)
+	localNodeID := fmt.Sprintf("%s:%d", s.Host, s.GrpcPort)
 
 	Log.Info().
 		Str("key", key).
@@ -215,8 +210,7 @@ func (s *server) setValue(c *gin.Context) {
 		return
 	}
 
-	cfg := config.GetConfig()
-	localNodeID := fmt.Sprintf("%s:%d", cfg.Hostname, cfg.GrpcPort)
+	localNodeID := fmt.Sprintf("%s:%d", s.Host, s.GrpcPort)
 
 	Log.Info().
 		Str("key", input.Key).

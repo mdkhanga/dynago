@@ -7,7 +7,6 @@ import (
 
 	"time"
 
-	"github.com/mdkhanga/dynago/config"
 	"github.com/mdkhanga/dynago/consistenthash"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/logger"
@@ -24,6 +23,7 @@ type cluster struct {
 	clusterMap map[string]*Peer
 	ring       *consistenthash.HashRing
 	store      *storage.MemoryStore
+	self       *Peer // this node's own entry in clusterMap
 	stopGossip chan struct{}
 	stopOnce   sync.Once
 }
@@ -42,6 +42,7 @@ type IClusterService interface {
 	Stop()
 	Start()
 	Store() *storage.MemoryStore
+	Self() *Peer
 }
 
 func (c *cluster) Start() {
@@ -73,6 +74,11 @@ func (c *cluster) AddToCluster(m *Peer) error {
 	defer c.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", *m.Host, *m.Port)
+
+	// Never replace this node's own entry: "is this me?" checks compare against c.self
+	if c.self != nil && m != c.self && key == fmt.Sprintf("%s:%d", *c.self.Host, *c.self.Port) {
+		return nil
+	}
 
 	// Check if this is a new node or just an update
 	_, existsInCluster := c.clusterMap[key]
@@ -130,15 +136,23 @@ func (c *cluster) Exists(hostname string, port int32) (bool, error) {
 	return true, nil
 }
 
-func New(store *storage.MemoryStore) IClusterService {
+func New(self *Peer, store *storage.MemoryStore) IClusterService {
 
-	return &cluster{
+	c := &cluster{
 		mu:         sync.Mutex{},
 		clusterMap: make(map[string]*Peer),
 		ring:       consistenthash.NewHashRing(consistenthash.DefaultVirtualNodes),
 		store:      store,
 		stopGossip: make(chan struct{}),
+		self:       self,
 	}
+	c.AddToCluster(self)
+	return c
+}
+
+// Self returns this node's own entry in the cluster.
+func (c *cluster) Self() *Peer {
+	return c.self
 }
 
 // Store returns the node's local key-value store.
@@ -147,8 +161,6 @@ func (c *cluster) Store() *storage.MemoryStore {
 }
 
 func (c *cluster) ClusterInfoGossip() {
-
-	cfg := config.GetConfig()
 
 	for {
 
@@ -170,7 +182,7 @@ func (c *cluster) ClusterInfoGossip() {
 				now := time.Now().UnixMilli()
 
 				pr.mu.Lock()
-				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+				if pr == c.self {
 					pr.Timestamp = time.Now().UnixMilli()
 				}
 
@@ -203,7 +215,7 @@ func (c *cluster) ClusterInfoGossip() {
 			c.mu.Lock()
 			for _, pr := range c.clusterMap {
 
-				if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+				if pr == c.self {
 					continue
 				}
 
@@ -231,8 +243,6 @@ func (c *cluster) ClusterInfoGossip() {
 
 func (c *cluster) Replicate(kv *models.KeyValue) {
 
-	cfg := config.GetConfig()
-
 	kvmsg := pb.KeyValueMessage{Key: kv.Key, Value: kv.Value}
 	servermsg := pb.ServerMessage{
 		Type:    pb.MessageType_KEY_VALUE,
@@ -245,7 +255,7 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 
 		Log.Info().Str("Replicating to ", key).Send()
 
-		if *pr.Host == cfg.Hostname && *pr.Port == cfg.GrpcPort {
+		if pr == c.self {
 			continue
 		}
 
@@ -257,8 +267,6 @@ func (c *cluster) Replicate(kv *models.KeyValue) {
 }
 
 func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Member {
-
-	cfg := config.GetConfig()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -315,7 +323,7 @@ func (c *cluster) MergePeerLists(received []*pb.Member, response bool) []*pb.Mem
 		for key, peer := range c.clusterMap {
 			receivedMember, exists := receivedMap[key]
 
-			if exists && (*peer.Host == cfg.Hostname && *peer.Port == cfg.GrpcPort) {
+			if exists && peer == c.self {
 				continue
 			}
 

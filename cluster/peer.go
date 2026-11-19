@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mdkhanga/dynago/config"
 	pb "github.com/mdkhanga/dynago/kvmessages"
 	"github.com/mdkhanga/dynago/models"
 	"google.golang.org/grpc"
@@ -373,7 +372,7 @@ func (p *Peer) processMessageLoop() {
 
 func (p *Peer) pingLoop() {
 
-	cfg := config.GetConfig()
+	self := p.cluster.Self()
 	// ctx := p.stream.Context()
 
 	for {
@@ -396,7 +395,7 @@ func (p *Peer) pingLoop() {
 			msg := &pb.ServerMessage{
 				Type: pb.MessageType_PING,
 				Content: &pb.ServerMessage_Ping{
-					Ping: &pb.PingRequest{Hello: 1, Hostname: cfg.Hostname, Port: cfg.GrpcPort},
+					Ping: &pb.PingRequest{Hello: 1, Hostname: *self.Host, Port: *self.Port},
 				},
 			}
 

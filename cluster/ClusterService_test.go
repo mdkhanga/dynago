@@ -21,7 +21,10 @@ var _ = Describe("ClusterService", func() {
 	)
 
 	BeforeEach(func() {
-		clusterService = cluster.New(storage.NewMemoryStore())
+		selfHost := "localhost"
+		selfPort := int32(9999)
+		self := &cluster.Peer{Host: &selfHost, Port: &selfPort, Timestamp: time.Now().UnixMilli(), Mine: true}
+		clusterService = cluster.New(self, storage.NewMemoryStore())
 		host1 = "192.168.1.10"
 		host2 = "192.168.1.11"
 		host3 = "192.168.1.12"
@@ -80,7 +83,7 @@ var _ = Describe("ClusterService", func() {
 
 				peers, err := clusterService.ListCluster()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(peers).To(HaveLen(3))
+				Expect(peers).To(HaveLen(4)) // 3 peers + this node
 			})
 		})
 	})
@@ -117,11 +120,11 @@ var _ = Describe("ClusterService", func() {
 	})
 
 	Describe("ListCluster", func() {
-		Context("when cluster is empty", func() {
-			It("should return an empty list", func() {
+		Context("when no other peers have joined", func() {
+			It("should return only this node", func() {
 				peers, err := clusterService.ListCluster()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(peers).To(BeEmpty())
+				Expect(peers).To(HaveLen(1))
 			})
 		})
 
@@ -135,7 +138,7 @@ var _ = Describe("ClusterService", func() {
 
 				peers, err := clusterService.ListCluster()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(peers).To(HaveLen(2))
+				Expect(peers).To(HaveLen(3)) // 2 peers + this node
 			})
 
 			It("should include both active and inactive peers", func() {
@@ -148,7 +151,7 @@ var _ = Describe("ClusterService", func() {
 
 				peers, err := clusterService.ListCluster()
 				Expect(err).ToNot(HaveOccurred())
-				Expect(peers).To(HaveLen(2))
+				Expect(peers).To(HaveLen(3)) // 2 peers + this node
 			})
 		})
 	})
